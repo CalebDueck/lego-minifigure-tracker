@@ -4,215 +4,178 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>LEGO Star Wars · Minifigure Tracker</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:       #07080f;
-    --surface:  #0d0f1c;
-    --surface2: #12152a;
-    --border:   #1e2240;
-    --gold:     #ffe81f;
-    --gold-dim: #ffe81f33;
-    --red:      #ff3333;
-    --green:    #39e075;
-    --blue:     #3b8ef5;
-    --text:     #d8daf0;
-    --muted:    #4a4f70;
-    --fhead:    'Orbitron', sans-serif;
-    --fbody:    'Rajdhani', sans-serif;
+    --bg:#07080f; --surface:#0d0f1c; --surface2:#12152a; --border:#1e2240;
+    --gold:#ffe81f; --gold-dim:#ffe81f33; --red:#ff3333; --green:#39e075;
+    --blue:#3b8ef5; --text:#d8daf0; --muted:#4a4f70;
+    --fhead:'Orbitron',sans-serif; --fbody:'Rajdhani',sans-serif;
   }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: var(--fbody); min-height: 100dvh; overflow-x: hidden; }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--fbody);min-height:100dvh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background-image:
+    radial-gradient(1px 1px at 12% 18%,#ffffff22,transparent),radial-gradient(1px 1px at 28% 62%,#ffffff18,transparent),
+    radial-gradient(1px 1px at 44% 33%,#ffffff15,transparent),radial-gradient(1px 1px at 57% 78%,#ffffff20,transparent),
+    radial-gradient(1px 1px at 72% 22%,#ffffff18,transparent),radial-gradient(1px 1px at 87% 55%,#ffffff22,transparent),
+    radial-gradient(1.5px 1.5px at 64% 47%,#ffe81f12,transparent),radial-gradient(1.5px 1.5px at 35% 73%,#ffe81f10,transparent)}
 
-  body::before {
-    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background-image:
-      radial-gradient(1px 1px at 12% 18%, #ffffff22, transparent),
-      radial-gradient(1px 1px at 28% 62%, #ffffff18, transparent),
-      radial-gradient(1px 1px at 44% 33%, #ffffff15, transparent),
-      radial-gradient(1px 1px at 57% 78%, #ffffff20, transparent),
-      radial-gradient(1px 1px at 72% 22%, #ffffff18, transparent),
-      radial-gradient(1px 1px at 87% 55%, #ffffff22, transparent),
-      radial-gradient(1px 1px at 93% 12%, #ffffff15, transparent),
-      radial-gradient(1px 1px at  7% 88%, #ffffff18, transparent),
-      radial-gradient(1.5px 1.5px at 64% 47%, #ffe81f12, transparent),
-      radial-gradient(1.5px 1.5px at 35% 73%, #ffe81f10, transparent),
-      radial-gradient(1.5px 1.5px at 80% 85%, #ffe81f15, transparent);
-  }
+  #app{position:relative;z-index:1;max-width:480px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
 
-  #app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
+  /* Auth */
+  #auth-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;gap:22px}
+  .auth-logo{font-size:60px;filter:drop-shadow(0 0 20px #ff000055)}
+  .auth-title{font-family:var(--fhead);font-size:21px;font-weight:900;color:var(--gold);letter-spacing:3px;text-shadow:0 0 20px #ffe81f55;line-height:1.2}
+  .auth-sub{font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:3px}
+  .auth-features{display:flex;flex-direction:column;gap:8px;width:100%;max-width:280px}
+  .auth-feature{display:flex;align-items:center;gap:10px;font-size:13px;color:#8890b0}
+  .auth-feature-icon{font-size:17px;width:26px;text-align:center}
+  #google-signin-btn{display:flex;align-items:center;gap:12px;background:#fff;color:#3c4043;border:none;border-radius:8px;padding:12px 24px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;box-shadow:0 2px 12px #00000044;font-family:var(--fbody)}
+  #google-signin-btn:hover{background:#f8f8f8;box-shadow:0 4px 20px #00000066;transform:translateY(-1px)}
+  .google-logo{width:20px;height:20px}
+  .auth-note{font-size:11px;color:#3a3f60;max-width:280px;line-height:1.6}
 
-  /* ── Auth screen ── */
-  #auth-screen {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    padding: 32px 24px; text-align: center; gap: 24px;
-  }
-  .auth-logo { font-size: 64px; filter: drop-shadow(0 0 20px #ff000055); }
-  .auth-title { font-family: var(--fhead); font-size: 22px; font-weight: 900; color: var(--gold); letter-spacing: 3px; text-shadow: 0 0 20px #ffe81f55; line-height: 1.2; }
-  .auth-sub { font-size: 14px; color: var(--muted); letter-spacing: 1px; margin-top: 4px; }
-  .auth-desc { font-size: 14px; color: #6a7090; line-height: 1.7; max-width: 320px; }
-  .auth-features { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 280px; }
-  .auth-feature { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #8890b0; }
-  .auth-feature-icon { font-size: 18px; width: 28px; text-align: center; }
+  /* Loading */
+  #loading-screen{flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+  .spinner{width:38px;height:38px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-text{font-family:var(--fhead);font-size:11px;color:var(--muted);letter-spacing:2px}
+  .loading-progress{font-size:12px;color:#3a4060;margin-top:4px}
 
-  #google-signin-btn {
-    display: flex; align-items: center; gap: 12px;
-    background: #fff; color: #3c4043;
-    border: none; border-radius: 8px;
-    padding: 12px 24px; font-size: 15px; font-weight: 600;
-    cursor: pointer; transition: all .2s;
-    box-shadow: 0 2px 12px #00000044;
-    font-family: var(--fbody);
-  }
-  #google-signin-btn:hover { background: #f8f8f8; box-shadow: 0 4px 20px #00000066; transform: translateY(-1px); }
-  #google-signin-btn:active { transform: scale(0.97); }
-  .google-logo { width: 20px; height: 20px; }
+  /* Main app */
+  #main-app{display:none;flex-direction:column;flex:1}
 
-  .auth-note { font-size: 11px; color: #3a3f60; max-width: 280px; line-height: 1.6; }
+  /* Header */
+  header{background:linear-gradient(180deg,#0d0f1c 0%,#07080f 100%);border-bottom:1px solid #ff000025;padding:11px 13px 0;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+  .header-top{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+  .logo-icon{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ff444455,#ff000022);border:1px solid #ff000044;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;box-shadow:0 0 14px #ff000033}
+  .logo-text{flex:1;min-width:0}
+  .logo-title{font-family:var(--fhead);font-size:11px;font-weight:900;color:var(--gold);letter-spacing:2px;text-shadow:0 0 10px #ffe81f55}
+  .logo-sub{font-size:8px;color:var(--muted);letter-spacing:1.5px;margin-top:1px}
+  .user-area{display:flex;align-items:center;gap:6px;flex-shrink:0}
+  .user-avatar{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);object-fit:cover}
+  .user-avatar-fallback{width:28px;height:28px;border-radius:50%;background:var(--surface2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px}
+  .sync-indicator{font-size:10px;cursor:default}
+  .signout-btn{background:none;border:1px solid var(--border);border-radius:5px;color:var(--muted);padding:3px 6px;font-size:9px;cursor:pointer;font-family:var(--fbody);transition:all .2s;white-space:nowrap}
+  .signout-btn:hover{border-color:var(--red);color:var(--red)}
+  .stats{display:flex;gap:8px}
+  .stat{display:flex;flex-direction:column;align-items:center}
+  .stat-val{font-family:var(--fhead);font-size:11px;font-weight:700;line-height:1}
+  .stat-lbl{font-size:7px;color:var(--muted);letter-spacing:1px;margin-top:1px}
 
-  /* ── Loading screen ── */
-  #loading-screen {
-    flex: 1; display: none; flex-direction: column;
-    align-items: center; justify-content: center; gap: 16px;
-  }
-  .spinner {
-    width: 40px; height: 40px; border: 3px solid var(--border);
-    border-top-color: var(--gold); border-radius: 50%;
-    animation: spin .8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { font-family: var(--fhead); font-size: 11px; color: var(--muted); letter-spacing: 2px; }
+  /* Tabs */
+  .tabs{display:flex;border-top:1px solid var(--border);margin-top:3px}
+  .tab{flex:1;padding:8px 4px 6px;background:none;border:none;cursor:pointer;color:var(--muted);font-family:var(--fbody);font-size:10px;font-weight:700;letter-spacing:1px;border-bottom:2px solid transparent;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:4px}
+  .tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+  .tab-count{background:#ffffff10;border-radius:8px;padding:1px 5px;font-size:9px}
+  .tab.active .tab-count{background:var(--gold-dim);color:var(--gold)}
 
-  /* ── Main app ── */
-  #main-app { display: none; flex-direction: column; flex: 1; }
+  /* Sync bar */
+  #sync-bar{display:none;align-items:center;justify-content:center;gap:6px;padding:4px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:10px;color:var(--muted)}
+  #sync-bar.visible{display:flex}
+  #sync-bar.saving{color:#ffe81f99}
+  #sync-bar.saved{color:#39e07599}
+  #sync-bar.error{color:#ff333399}
+  .sync-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+  .sync-dot.pulse{animation:pulse 1s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-  /* ── Header ── */
-  header {
-    background: linear-gradient(180deg, #0d0f1c 0%, #07080f 100%);
-    border-bottom: 1px solid #ff000025;
-    padding: 12px 14px 0;
-    position: sticky; top: 0; z-index: 100;
-    backdrop-filter: blur(12px);
-  }
-  .header-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-  .logo-icon { width: 36px; height: 36px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ff444455, #ff000022); border: 1px solid #ff000044; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; box-shadow: 0 0 14px #ff000033; }
-  .logo-text { flex: 1; min-width: 0; }
-  .logo-title { font-family: var(--fhead); font-size: 12px; font-weight: 900; color: var(--gold); letter-spacing: 2px; text-shadow: 0 0 10px #ffe81f55; }
-  .logo-sub { font-size: 9px; color: var(--muted); letter-spacing: 1.5px; margin-top: 1px; }
+  /* Toolbar */
+  .toolbar{display:flex;gap:8px;padding:9px 11px 4px;position:sticky;top:112px;z-index:90;background:var(--bg)}
+  .search-wrap{flex:1;position:relative}
+  .search-wrap input{width:100%;padding:7px 10px 7px 30px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--fbody);font-size:13px;outline:none;transition:border-color .2s}
+  .search-wrap input:focus{border-color:#ffe81f33}
+  .search-wrap input::placeholder{color:var(--muted)}
+  .search-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);pointer-events:none}
+  .filter-btn{padding:6px 10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--muted);cursor:pointer;font-family:var(--fbody);font-size:11px;font-weight:600;white-space:nowrap;transition:all .2s}
+  .filter-btn.active{background:var(--surface2);border-color:#ffe81f44;color:var(--gold)}
+  .section-label{font-size:10px;letter-spacing:1.5px;color:var(--muted);padding:2px 13px 5px;text-transform:uppercase}
 
-  /* User avatar */
-  .user-area { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-  .user-avatar { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--border); object-fit: cover; }
-  .user-avatar-fallback { width: 30px; height: 30px; border-radius: 50%; background: var(--surface2); border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 13px; }
-  .sync-indicator { font-size: 10px; }
-  .signout-btn { background: none; border: 1px solid var(--border); border-radius: 5px; color: var(--muted); padding: 3px 7px; font-size: 10px; cursor: pointer; font-family: var(--fbody); transition: all .2s; }
-  .signout-btn:hover { border-color: var(--red); color: var(--red); }
+  /* Figure grid */
+  .figure-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:0 10px 16px}
+  .figure-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px 5px 7px;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;transition:transform .15s}
+  .figure-card:active{transform:scale(0.96)}
+  .figure-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--cat-color,#555)}
+  .fig-img-wrap{width:66px;height:66px;display:flex;align-items:center;justify-content:center;margin-bottom:5px}
+  .fig-img{width:66px;height:66px;object-fit:contain}
+  .fig-fallback{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--fhead);font-size:14px;font-weight:900;border:2px solid var(--cat-color,#555);background:color-mix(in srgb,var(--cat-color,#555) 15%,transparent);color:var(--cat-color,#888)}
+  .fig-name{font-size:9.5px;text-align:center;color:#aab;font-weight:600;line-height:1.3;min-height:25px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:3px}
+  .fig-code-link{display:flex;align-items:center;gap:3px;margin-bottom:5px;text-decoration:none}
+  .fig-code{font-size:8.5px;color:var(--muted);letter-spacing:.5px;font-family:var(--fhead)}
+  .fig-actions{display:flex;gap:4px;width:100%}
+  .fig-btn{flex:1;padding:4px 2px;border-radius:5px;border:1px solid;cursor:pointer;font-weight:700;font-size:11px;font-family:var(--fbody);transition:opacity .15s}
+  .fig-btn-wish{background:#1a1a3a;border-color:#333;color:var(--gold)}
+  .fig-btn-own{background:#0a1a0a;border-color:#1a3a1a;color:var(--green)}
+  .fig-btn-full{width:100%;padding:4px;border-radius:5px;border:1px solid #1a3a1a;background:#0a1a0a;color:var(--green);cursor:pointer;font-weight:700;font-size:9.5px;font-family:var(--fbody);letter-spacing:.5px}
 
-  .stats { display: flex; gap: 10px; }
-  .stat { display: flex; flex-direction: column; align-items: center; }
-  .stat-val { font-family: var(--fhead); font-size: 12px; font-weight: 700; line-height: 1; }
-  .stat-lbl { font-size: 8px; color: var(--muted); letter-spacing: 1px; margin-top: 1px; }
+  /* Progress */
+  .progress-wrap{padding:0 13px 7px}
+  .progress-bg{height:3px;background:var(--border);border-radius:2px}
+  .progress-fill{height:3px;background:var(--green);border-radius:2px;transition:width .4s}
 
-  /* ── Tabs ── */
-  .tabs { display: flex; border-top: 1px solid var(--border); margin-top: 4px; }
-  .tab { flex: 1; padding: 9px 4px 7px; background: none; border: none; cursor: pointer; color: var(--muted); font-family: var(--fbody); font-size: 10px; font-weight: 700; letter-spacing: 1px; border-bottom: 2px solid transparent; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 4px; }
-  .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
-  .tab-count { background: #ffffff10; border-radius: 8px; padding: 1px 5px; font-size: 9px; }
-  .tab.active .tab-count { background: var(--gold-dim); color: var(--gold); }
+  /* Wishlist */
+  .wishlist-list{display:flex;flex-direction:column;gap:6px;padding:0 10px 16px}
+  .wish-row{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--cat-color,#555);border-radius:8px;padding:7px 7px 7px 9px}
+  .wish-rank{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--fhead);font-size:10px;font-weight:900;flex-shrink:0;border:1px solid}
+  .wish-img{width:40px;height:40px;object-fit:contain;flex-shrink:0}
+  .wish-fallback{width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--fhead);font-size:11px;font-weight:900;border:1.5px solid var(--cat-color,#555);background:color-mix(in srgb,var(--cat-color,#555) 15%,transparent);color:var(--cat-color,#888)}
+  .wish-info{flex:1;min-width:0}
+  .wish-name{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .wish-meta{display:flex;gap:4px;align-items:center;margin-top:1px;flex-wrap:wrap}
+  .wish-code{font-size:8.5px;color:var(--muted);font-family:var(--fhead)}
+  .wish-cat{font-size:9px;color:#3a3f60}
+  .wish-bl{font-size:10px;color:var(--blue);text-decoration:none;margin-top:2px;display:block}
+  .wish-controls{display:flex;align-items:center;gap:3px;flex-shrink:0}
+  .wc-btn{width:28px;height:28px;border-radius:6px;border:1px solid;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;font-weight:700;transition:opacity .15s;background:none}
+  .wc-own{border-color:#1a3a1a;background:#0a1a0a;color:var(--green)}
+  .wc-remove{border-color:#3a1a1a;background:#1a0a0a;color:var(--red)}
+  .wc-arrows{display:flex;flex-direction:column;gap:2px}
+  .wc-arrow{width:26px;height:12px;border-radius:3px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:7px;color:#666;transition:all .15s}
+  .wc-arrow:hover:not([disabled]){color:var(--text)}
+  .wc-arrow[disabled]{opacity:.2;cursor:default}
 
-  /* ── Toolbar ── */
-  .toolbar { display: flex; gap: 8px; padding: 10px 12px 4px; position: sticky; top: 116px; z-index: 90; background: var(--bg); }
-  .search-wrap { flex: 1; position: relative; }
-  .search-wrap input { width: 100%; padding: 8px 10px 8px 32px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--fbody); font-size: 13px; outline: none; transition: border-color .2s; }
-  .search-wrap input:focus { border-color: #ffe81f33; }
-  .search-wrap input::placeholder { color: var(--muted); }
-  .search-icon { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--muted); pointer-events: none; }
-  .filter-btn { padding: 7px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); cursor: pointer; font-family: var(--fbody); font-size: 11px; font-weight: 600; white-space: nowrap; transition: all .2s; }
-  .filter-btn.active { background: var(--surface2); border-color: #ffe81f44; color: var(--gold); }
+  /* Category chip strip */
+  .cat-strip{display:flex;gap:6px;overflow-x:auto;padding:0 10px 8px;scrollbar-width:none}
+  .cat-strip::-webkit-scrollbar{display:none}
+  .cat-chip{padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0;font-family:var(--fbody)}
+  .cat-chip.active{background:var(--surface2);color:var(--gold);border-color:#ffe81f55}
 
-  .section-label { font-size: 10px; letter-spacing: 1.5px; color: var(--muted); padding: 2px 14px 6px; text-transform: uppercase; }
+  /* Empty / error */
+  .empty{text-align:center;padding:50px 20px;color:var(--muted)}
+  .empty-icon{font-size:36px;margin-bottom:10px}
+  .empty-text{font-size:13px;line-height:1.7}
 
-  /* ── Figure grid ── */
-  .figure-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 10px 16px; }
-  .figure-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 6px 8px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; transition: transform .15s; }
-  .figure-card:active { transform: scale(0.96); }
-  .figure-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--cat-color, #555); }
-  .fig-img-wrap { width: 68px; height: 68px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; }
-  .fig-img { width: 68px; height: 68px; object-fit: contain; }
-  .fig-fallback { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--fhead); font-size: 15px; font-weight: 900; border: 2px solid var(--cat-color, #555); background: color-mix(in srgb, var(--cat-color, #555) 15%, transparent); color: var(--cat-color, #888); }
-  .fig-name { font-size: 10px; text-align: center; color: #aab; font-weight: 600; line-height: 1.3; min-height: 26px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 3px; }
-  .fig-code-link { display: flex; align-items: center; gap: 3px; margin-bottom: 5px; text-decoration: none; }
-  .fig-code { font-size: 9px; color: var(--muted); letter-spacing: 0.5px; font-family: var(--fhead); }
-  .fig-actions { display: flex; gap: 4px; width: 100%; }
-  .fig-btn { flex: 1; padding: 5px 2px; border-radius: 5px; border: 1px solid; cursor: pointer; font-weight: 700; font-size: 12px; font-family: var(--fbody); transition: opacity .15s; }
-  .fig-btn-wish { background: #1a1a3a; border-color: #333; color: var(--gold); }
-  .fig-btn-own  { background: #0a1a0a; border-color: #1a3a1a; color: var(--green); }
-  .fig-btn-full { width: 100%; padding: 5px; border-radius: 5px; border: 1px solid #1a3a1a; background: #0a1a0a; color: var(--green); cursor: pointer; font-weight: 700; font-size: 10px; font-family: var(--fbody); letter-spacing: 0.5px; }
+  /* Modal */
+  .modal-backdrop{position:fixed;inset:0;background:#00000088;z-index:200;display:none;align-items:flex-end}
+  .modal-backdrop.open{display:flex}
+  .modal-sheet{width:100%;max-width:480px;margin:0 auto;background:var(--surface);border-top-left-radius:16px;border-top-right-radius:16px;padding:18px;max-height:70dvh;overflow-y:auto;border-top:1px solid var(--border);animation:slideUp .25s ease}
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .modal-title{font-family:var(--fhead);font-size:11px;color:var(--gold);letter-spacing:2px;margin-bottom:12px}
+  .cat-option{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:6px;cursor:pointer;transition:background .15s}
+  .cat-option:hover,.cat-option.active{background:var(--surface2)}
+  .cat-option.active .cat-label{color:var(--gold);font-weight:700}
+  .cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .cat-label{font-size:13px;color:var(--text);font-weight:500}
 
-  /* ── Progress ── */
-  .progress-wrap { padding: 0 14px 8px; }
-  .progress-bg { height: 3px; background: var(--border); border-radius: 2px; }
-  .progress-fill { height: 3px; background: var(--green); border-radius: 2px; transition: width .4s; }
+  /* Toast */
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface2);border:1px solid var(--border);padding:7px 16px;border-radius:20px;font-size:12px;color:var(--text);transition:transform .3s;z-index:300;pointer-events:none;white-space:nowrap}
+  #toast.show{transform:translateX(-50%) translateY(0)}
 
-  /* ── Wishlist ── */
-  .wishlist-list { display: flex; flex-direction: column; gap: 6px; padding: 0 10px 16px; }
-  .wish-row { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--cat-color, #555); border-radius: 8px; padding: 8px 8px 8px 10px; }
-  .wish-rank { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--fhead); font-size: 10px; font-weight: 900; flex-shrink: 0; border: 1px solid; }
-  .wish-img  { width: 42px; height: 42px; object-fit: contain; flex-shrink: 0; }
-  .wish-fallback { width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--fhead); font-size: 11px; font-weight: 900; border: 1.5px solid var(--cat-color, #555); background: color-mix(in srgb, var(--cat-color, #555) 15%, transparent); color: var(--cat-color, #888); }
-  .wish-info { flex: 1; min-width: 0; }
-  .wish-name { font-size: 12px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .wish-meta { display: flex; gap: 4px; align-items: center; margin-top: 1px; flex-wrap: wrap; }
-  .wish-code { font-size: 9px; color: var(--muted); font-family: var(--fhead); }
-  .wish-cat  { font-size: 9px; color: #3a3f60; }
-  .wish-bl   { font-size: 10px; color: var(--blue); text-decoration: none; margin-top: 2px; display: block; }
-  .wish-controls { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
-  .wc-btn { width: 28px; height: 28px; border-radius: 6px; border: 1px solid; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; font-weight: 700; transition: opacity .15s; background: none; }
-  .wc-own    { border-color: #1a3a1a; background: #0a1a0a; color: var(--green); }
-  .wc-remove { border-color: #3a1a1a; background: #1a0a0a; color: var(--red); }
-  .wc-arrows { display: flex; flex-direction: column; gap: 2px; }
-  .wc-arrow { width: 26px; height: 12px; border-radius: 3px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 7px; color: #666; transition: all .15s; }
-  .wc-arrow:hover:not([disabled]) { color: var(--text); }
-  .wc-arrow[disabled] { opacity: 0.2; cursor: default; }
-
-  /* ── Empty states ── */
-  .empty { text-align: center; padding: 50px 20px; color: var(--muted); }
-  .empty-icon { font-size: 36px; margin-bottom: 10px; }
-  .empty-text { font-size: 13px; line-height: 1.7; }
-
-  /* ── Category modal ── */
-  .modal-backdrop { position: fixed; inset: 0; background: #00000088; z-index: 200; display: none; align-items: flex-end; }
-  .modal-backdrop.open { display: flex; }
-  .modal-sheet { width: 100%; max-width: 480px; margin: 0 auto; background: var(--surface); border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 20px; max-height: 65dvh; overflow-y: auto; border-top: 1px solid var(--border); animation: slideUp .25s ease; }
-  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  .modal-title { font-family: var(--fhead); font-size: 12px; color: var(--gold); letter-spacing: 2px; margin-bottom: 14px; }
-  .cat-option { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 6px; cursor: pointer; transition: background .15s; }
-  .cat-option:hover, .cat-option.active { background: var(--surface2); }
-  .cat-option.active .cat-label { color: var(--gold); font-weight: 700; }
-  .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .cat-label { font-size: 13px; color: var(--text); font-weight: 500; }
-
-  /* ── Sync status bar ── */
-  #sync-bar { display: none; align-items: center; justify-content: center; gap: 6px; padding: 5px; background: var(--surface2); border-bottom: 1px solid var(--border); font-size: 11px; color: var(--muted); }
-  #sync-bar.visible { display: flex; }
-  #sync-bar.saving { color: #ffe81f99; }
-  #sync-bar.saved  { color: #39e07599; }
-  #sync-bar.error  { color: #ff333399; }
-  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-  .sync-dot.pulse { animation: pulse 1s ease-in-out infinite; }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-
-  /* ── Toast ── */
-  #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface2); border: 1px solid var(--border); padding: 8px 18px; border-radius: 20px; font-size: 13px; color: var(--text); transition: transform .3s; z-index: 300; pointer-events: none; white-space: nowrap; }
-  #toast.show { transform: translateX(-50%) translateY(0); }
+  /* Skeleton loader */
+  .skeleton-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:0 10px 16px}
+  .skeleton-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px 5px 7px;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .skeleton-img{width:66px;height:66px;border-radius:8px;background:var(--surface2);animation:shimmer 1.5s infinite}
+  .skeleton-line{height:10px;border-radius:4px;background:var(--surface2);animation:shimmer 1.5s infinite}
+  .skeleton-line.w80{width:80%}
+  .skeleton-line.w60{width:60%}
+  .skeleton-line.w40{width:40%}
+  @keyframes shimmer{0%,100%{opacity:.5}50%{opacity:1}}
 </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- ── Auth screen ── -->
+  <!-- Auth screen -->
   <div id="auth-screen">
     <div class="auth-logo">⚔️</div>
     <div>
@@ -220,9 +183,9 @@
       <div class="auth-sub">MINIFIGURE TRACKER</div>
     </div>
     <div class="auth-features">
-      <div class="auth-feature"><span class="auth-feature-icon">📦</span> Track your collection</div>
+      <div class="auth-feature"><span class="auth-feature-icon">📦</span> Track your full collection</div>
       <div class="auth-feature"><span class="auth-feature-icon">⭐</span> Ranked wishlist</div>
-      <div class="auth-feature"><span class="auth-feature-icon">🔗</span> Live BrickLink data</div>
+      <div class="auth-feature"><span class="auth-feature-icon">🔗</span> 1,300+ figures from BrickLink</div>
       <div class="auth-feature"><span class="auth-feature-icon">☁️</span> Syncs across all your devices</div>
     </div>
     <button id="google-signin-btn" onclick="handleSignIn()">
@@ -231,20 +194,20 @@
         <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
         <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
         <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.34-8.16 2.34-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-        <path fill="none" d="M0 0h48v48H0z"/>
       </svg>
       Continue with Google
     </button>
     <div class="auth-note">Your data is stored privately in your own Google Drive. Only this app can access it.</div>
   </div>
 
-  <!-- ── Loading screen ── -->
+  <!-- Loading screen -->
   <div id="loading-screen">
     <div class="spinner"></div>
     <div class="loading-text" id="loading-text">SIGNING IN…</div>
+    <div class="loading-progress" id="loading-progress"></div>
   </div>
 
-  <!-- ── Main app ── -->
+  <!-- Main app -->
   <div id="main-app">
     <header>
       <div class="header-top">
@@ -256,6 +219,7 @@
         <div class="stats">
           <div class="stat"><span class="stat-val" id="stat-owned" style="color:#39e075">0</span><span class="stat-lbl">OWNED</span></div>
           <div class="stat"><span class="stat-val" id="stat-wish"  style="color:#ffe81f">0</span><span class="stat-lbl">WISH</span></div>
+          <div class="stat"><span class="stat-val" id="stat-total" style="color:#4a4f70">0</span><span class="stat-lbl">LEFT</span></div>
         </div>
         <div class="user-area">
           <span id="sync-icon" class="sync-indicator" title="Sync status">☁️</span>
@@ -271,334 +235,248 @@
       </div>
     </header>
 
-    <!-- Sync status bar -->
     <div id="sync-bar"><div class="sync-dot pulse"></div><span id="sync-msg">Syncing…</span></div>
 
-    <div id="main-content" style="flex:1; overflow-y:auto;">
+    <div id="main-content" style="flex:1;overflow-y:auto">
       <div class="toolbar" id="toolbar">
         <div class="search-wrap">
           <span class="search-icon">🔍</span>
           <input type="text" id="search-input" placeholder="Search name or code…" oninput="renderCurrent()">
         </div>
-        <button class="filter-btn" id="filter-btn" onclick="openFilter()">☰ Era</button>
+        <button class="filter-btn" id="filter-btn" onclick="openFilter()">☰ Show</button>
       </div>
+      <!-- Category chips scrolled horizontally -->
+      <div class="cat-strip" id="cat-strip"></div>
       <div id="section-label" class="section-label"></div>
       <div id="content"></div>
     </div>
   </div>
 </div>
 
-<!-- Category filter modal -->
+<!-- Filter modal -->
 <div class="modal-backdrop" id="modal" onclick="if(event.target===this)closeFilter()">
   <div class="modal-sheet">
-    <div class="modal-title">FILTER BY ERA</div>
+    <div class="modal-title">FILTER BY SHOW / MOVIE</div>
     <div id="cat-list"></div>
   </div>
 </div>
 
 <div id="toast"></div>
 
-<!-- Google APIs -->
-<script src="https://apis.google.com/js/api.js"></script>
-<script src="https://accounts.google.com/gsi/client"></script>
-
 <script>
-// ══════════════════════════════════════════════════════════════════════════════
-// !! REPLACE THIS WITH YOUR OWN CLIENT ID FROM GOOGLE CLOUD CONSOLE !!
-// See SETUP.md included with this file for instructions.
-// ══════════════════════════════════════════════════════════════════════════════
-const CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
-const API_KEY   = 'YOUR_GOOGLE_API_KEY'; // optional but helps with quota
+// ══════════════════════════════════════════════════════════════
+// CONFIG — replace these with your own keys
+// ══════════════════════════════════════════════════════════════
+const GOOGLE_CLIENT_ID    = '1077117676417-9eb51tcdg19qfh13d98a1vtq7o68r8k3.apps.googleusercontent.com';
+
+const REBRICKABLE_API_KEY = '24aa9f228735a840980c9e275fa597bc';
+
+// ─── BrickLink / Rebrickable helpers ─────────────────────────
+const blImg  = code => `https://img.bricklink.com/ItemImage/MN/0/${code}.png`;
+const blPage = code => `https://www.bricklink.com/v2/catalog/catalogitem.page?M=${code}`;
+const initials = n => n.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+const RANK_COLORS = ['#ffd700','#c0c0c0','#cd7f32'];
+
+// ─── Star Wars theme mapping ──────────────────────────────────
+// Maps BrickLink sw-code prefixes / name patterns → show/movie label
+// Rebrickable returns fig names like "SW0001 - Battle Droid"
+// We categorise by the Rebrickable theme_name field when available,
+// and fall back to name-keyword matching.
+const SHOW_COLORS = {
+  "Episode I – The Phantom Menace":      "#3b82f6",
+  "Episode II – Attack of the Clones":   "#60a5fa",
+  "Episode III – Revenge of the Sith":   "#818cf8",
+  "The Clone Wars":                       "#ef4444",
+  "Episode IV – A New Hope":             "#f59e0b",
+  "Episode V – The Empire Strikes Back": "#fbbf24",
+  "Episode VI – Return of the Jedi":     "#fcd34d",
+  "Rebels":                              "#f97316",
+  "Rogue One":                           "#6b7280",
+  "Solo":                                "#d97706",
+  "Episode VII – The Force Awakens":     "#8b5cf6",
+  "Episode VIII – The Last Jedi":        "#a78bfa",
+  "Episode IX – The Rise of Skywalker":  "#c4b5fd",
+  "The Mandalorian":                     "#10b981",
+  "The Book of Boba Fett":               "#dc2626",
+  "Obi-Wan Kenobi":                      "#06b6d4",
+  "Andor":                               "#64748b",
+  "Ahsoka":                              "#7c3aed",
+  "The Acolyte":                         "#ec4899",
+  "Other / Expanded Universe":           "#4a4f70",
+};
+
+// Keyword rules applied to figure name to guess the show
+function guessCategory(name, figNum) {
+  const n = name.toLowerCase();
+  const num = parseInt((figNum||'').replace(/\D/g,'')) || 0;
+
+  // Episode I
+  if (/qui.gon|jar jar|watto|nute gunray|battle droid|naboo|valorum|maul|tarpals|boss nass|sebulba|padme.*battle|padm[eé].*trade|anakin.*young|anakin.*pod|obi-wan.*padawan|obi.wan.*padawan/.test(n)) return "Episode I – The Phantom Menace";
+  // Episode II
+  if (/jango|zam wesell|jango|clone trooper.*ep.?ii|dexter|clone.*arena|padme.*arena|padm[eé].*arena|obi-wan.*ep.?ii|anakin.*ep.?ii|count dooku/.test(n)) return "Episode II – Attack of the Clones";
+  // Episode III
+  if (/commander cody|grievous|order 66|mustafar|anakin.*ep.?iii|obi.wan.*ep.?iii|anakin.*sith|clone.*ep.?iii|revenge/.test(n)) return "Episode III – Revenge of the Sith";
+  // Clone Wars animated
+  if (/ahsoka|captain rex|cad bane|asajj|savage opress|hondo|pre vizsla|bo.katan.*tcw|aurra sing|arc trooper|wolffe|fox.*clone|clone wars|pong krell|even piell|clone.*animated/.test(n)) return "The Clone Wars";
+  // Rebels
+  if (/ezra|kanan|hera syndulla.*reb|sabine.*reb|zeb|chopper|kallus|inquisitor.*reb|thrawn.*reb|super commando|rebels/.test(n)) return "Rebels";
+  // Rogue One
+  if (/jyn erso|cassian.*rogue|k-2so|chirrut|baze|krennic|bodhi|saw gerrera|death trooper|shoretrooper|rogue one/.test(n)) return "Rogue One";
+  // Solo
+  if (/qi'ra|tobias beckett|val |rio durant|l3-37|enfys|dryden|han.*young|lando.*young|coaxium|solo/.test(n)) return "Solo";
+  // Ep IV
+  if (/new hope|red leader|biggs|wedge|hammerhead|greedo|tarkin|ackbar|jawas|tusken|ugnaught|lobot|ep.?iv|episode iv/.test(n)) return "Episode IV – A New Hope";
+  // Ep V
+  if (/hoth|snowtrooper|at-at driver|at.at driver|ep.?v|empire/.test(n)) return "Episode V – The Empire Strikes Back";
+  // Ep VI
+  if (/endor|ewok|wicket|gamorrean|boushh|ep.?vi|return of the jedi|emperor.*ep|palpatine.*ep.?vi/.test(n)) return "Episode VI – Return of the Jedi";
+  // Ep VII
+  if (/finn|poe dameron|bb-8|captain phasma|kylo ren|maz kanata|unkar|first order.*ep.?vii|force awakens|ep.?vii/.test(n)) return "Episode VII – The Force Awakens";
+  // Ep VIII
+  if (/rose tico|holdo|ep.?viii|last jedi/.test(n)) return "Episode VIII – The Last Jedi";
+  // Ep IX
+  if (/zorii|jannah|sith trooper|ep.?ix|rise of skywalker/.test(n)) return "Episode IX – The Rise of Skywalker";
+  // Mandalorian
+  if (/mandalorian|din djarin|grogu|cara dune|greef karga|moff gideon|armorer|paz vizsla|dark trooper|koska|fennec.*mand|boba.*mandalorian|bo.katan.*mand/.test(n)) return "The Mandalorian";
+  // Book of Boba Fett
+  if (/boba.*fett.*book|black krrsantan|cad bane.*book|fennec.*boba|boba.*bof/.test(n)) return "The Book of Boba Fett";
+  // Obi-Wan series
+  if (/reva|third sister|fifth brother|tala durith|young leia|obi.wan.*series|kenobi.*series/.test(n)) return "Obi-Wan Kenobi";
+  // Andor
+  if (/dedra|luthen|syril|andor.*series/.test(n)) return "Andor";
+  // Ahsoka series
+  if (/baylan|shin hati|morgan elsbeth|huyang|ahsoka.*series|sabine.*series|hera.*series|thrawn.*series/.test(n)) return "Ahsoka";
+  // Acolyte
+  if (/acolyte|mae |osha /.test(n)) return "The Acolyte";
+  // Generic OT characters that didn't match above
+  if (/darth vader|luke skywalker|han solo|princess leia|obi.wan.*old|chewbacca|c-3po|r2-d2|lando|stormtrooper|tie fighter pilot|imperial|rebel|boba fett|r4-|r5-|at-st|scout trooper|royal guard|death star/.test(n)) return "Episode IV – A New Hope";
+  if (/prequel|padm[eé]|anakin|clone|mace windu|yoda|count dooku|ki-adi|plo koon|kit fisto|aayla|shaak ti|bail organa|magn|droid/.test(n)) return "Episode I – The Phantom Menace";
+  return "Other / Expanded Universe";
+}
+
+// ─── State ────────────────────────────────────────────────────
+let FIGURES         = [];           // loaded from Rebrickable
+let figuresLoaded   = false;
+let figuresCached   = false;
+let collection      = new Set();
+let wishlist        = [];
+let activeTab       = 'discover';
+let activeCat       = 'All';
+let accessToken     = null;
+let driveFileId     = null;
+let saveTimer       = null;
+let gapiReady       = false;
+let gisReady        = false;
+let tokenClient     = null;
+
+const CACHE_KEY     = 'sw_figures_cache';
+const CACHE_VER_KEY = 'sw_figures_cache_ver';
+const CACHE_VERSION = '2025-03';   // bump this to force a refresh
+
+// ─── Rebrickable loader ───────────────────────────────────────
+async function loadFigures() {
+  // Check localStorage cache first
+  try {
+    const ver = localStorage.getItem(CACHE_VER_KEY);
+    if (ver === CACHE_VERSION) {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        FIGURES = JSON.parse(cached);
+        figuresCached = true;
+        figuresLoaded = true;
+        setLoadingProgress(`Loaded ${FIGURES.length} figures from cache`);
+        return;
+      }
+    }
+  } catch(e) {}
+
+  // Fetch all pages from Rebrickable
+  setLoadingProgress('Fetching figures from Rebrickable…');
+  let url = `https://rebrickable.com/api/v3/lego/minifigs/?search=sw&page_size=100&ordering=set_num`;
+  let allFigs = [];
+  let page = 1;
+
+  while (url) {
+    setLoadingProgress(`Loading page ${page}… (${allFigs.length} figures so far)`);
+    const res = await fetch(url, {
+      headers: { Authorization: `key ${REBRICKABLE_API_KEY}` }
+    });
+    if (!res.ok) throw new Error(`Rebrickable API error: ${res.status}`);
+    const data = await res.json();
+
+    for (const fig of data.results) {
+      // Only include Star Wars figures (set_num starts with sw)
+      if (!fig.set_num.toLowerCase().startsWith('sw')) continue;
+      const code = fig.set_num.toLowerCase().replace(/-1$/, '');
+      const name = fig.name;
+      const cat  = guessCategory(name, code);
+      allFigs.push({ code, name, cat, img: fig.set_img_url });
+    }
+
+    url = data.next;
+    page++;
+  }
+
+  FIGURES = allFigs;
+  figuresLoaded = true;
+
+  // Cache it
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(FIGURES));
+    localStorage.setItem(CACHE_VER_KEY, CACHE_VERSION);
+  } catch(e) {}
+
+  setLoadingProgress(`Loaded ${FIGURES.length} Star Wars figures`);
+}
+
+function setLoadingProgress(msg) {
+  const el = document.getElementById('loading-progress');
+  if (el) el.textContent = msg;
+}
+
+// ─── Google API ───────────────────────────────────────────────
 const SCOPES    = 'https://www.googleapis.com/auth/drive.appdata';
 const FILE_NAME = 'sw-lego-tracker-data.json';
 const DISCOVERY = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
-const CAT_COLORS = {
-  "Original Trilogy":  "#f59e0b",
-  "Prequel Trilogy":   "#3b82f6",
-  "Clone Wars":        "#ef4444",
-  "Sequel Trilogy":    "#8b5cf6",
-  "The Mandalorian":   "#10b981",
-  "Rebels":            "#f97316",
-  "Rogue One":         "#6b7280",
-  "Solo":              "#d97706",
-  "Obi-Wan Kenobi":    "#06b6d4",
-  "Andor":             "#64748b",
-  "Book of Boba Fett": "#dc2626",
-  "Ahsoka":            "#7c3aed",
-};
-const CATEGORIES = ["All", ...Object.keys(CAT_COLORS)];
-const FIGURES = [
-  {code:"sw0014",name:"Stormtrooper",cat:"Original Trilogy"},
-  {code:"sw0015",name:"Luke Skywalker (Tatooine)",cat:"Original Trilogy"},
-  {code:"sw0016",name:"Han Solo",cat:"Original Trilogy"},
-  {code:"sw0017",name:"Princess Leia",cat:"Original Trilogy"},
-  {code:"sw0018",name:"Darth Vader",cat:"Original Trilogy"},
-  {code:"sw0019",name:"Obi-Wan Kenobi (Old)",cat:"Original Trilogy"},
-  {code:"sw0020",name:"C-3PO",cat:"Original Trilogy"},
-  {code:"sw0021",name:"R2-D2",cat:"Original Trilogy"},
-  {code:"sw0022",name:"Chewbacca",cat:"Original Trilogy"},
-  {code:"sw0023",name:"Lando Calrissian",cat:"Original Trilogy"},
-  {code:"sw0024",name:"TIE Fighter Pilot",cat:"Original Trilogy"},
-  {code:"sw0025",name:"Imperial Officer",cat:"Original Trilogy"},
-  {code:"sw0026",name:"AT-AT Driver",cat:"Original Trilogy"},
-  {code:"sw0027",name:"Snowtrooper",cat:"Original Trilogy"},
-  {code:"sw0028",name:"Rebel Trooper",cat:"Original Trilogy"},
-  {code:"sw0029",name:"Luke Skywalker (Hoth)",cat:"Original Trilogy"},
-  {code:"sw0030",name:"Han Solo (Hoth)",cat:"Original Trilogy"},
-  {code:"sw0031",name:"Scout Trooper",cat:"Original Trilogy"},
-  {code:"sw0032",name:"Luke Skywalker (Jedi)",cat:"Original Trilogy"},
-  {code:"sw0033",name:"Emperor Palpatine",cat:"Original Trilogy"},
-  {code:"sw0034",name:"Imperial Royal Guard",cat:"Original Trilogy"},
-  {code:"sw0035",name:"Admiral Ackbar",cat:"Original Trilogy"},
-  {code:"sw0036",name:"Nien Nunb",cat:"Original Trilogy"},
-  {code:"sw0037",name:"Wicket the Ewok",cat:"Original Trilogy"},
-  {code:"sw0038",name:"Gamorrean Guard",cat:"Original Trilogy"},
-  {code:"sw0039",name:"Greedo",cat:"Original Trilogy"},
-  {code:"sw0040",name:"Jawas",cat:"Original Trilogy"},
-  {code:"sw0041",name:"Tusken Raider",cat:"Original Trilogy"},
-  {code:"sw0042",name:"Han Solo (Endor)",cat:"Original Trilogy"},
-  {code:"sw0043",name:"Princess Leia (Endor)",cat:"Original Trilogy"},
-  {code:"sw0044",name:"Princess Leia (Boushh)",cat:"Original Trilogy"},
-  {code:"sw0045",name:"Darth Vader (Unmasked)",cat:"Original Trilogy"},
-  {code:"sw0046",name:"Death Star Trooper",cat:"Original Trilogy"},
-  {code:"sw0047",name:"Grand Moff Tarkin",cat:"Original Trilogy"},
-  {code:"sw0048",name:"Wedge Antilles",cat:"Original Trilogy"},
-  {code:"sw0002",name:"Boba Fett",cat:"Original Trilogy"},
-  {code:"sw0092",name:"Luke Skywalker (X-Wing Pilot)",cat:"Original Trilogy"},
-  {code:"sw0093",name:"Biggs Darklighter",cat:"Original Trilogy"},
-  {code:"sw0094",name:"Hammerhead",cat:"Original Trilogy"},
-  {code:"sw0095",name:"Lobot",cat:"Original Trilogy"},
-  {code:"sw0096",name:"Ugnaught",cat:"Original Trilogy"},
-  {code:"sw0190",name:"Han Solo (Carbonite)",cat:"Original Trilogy"},
-  {code:"sw0350",name:"Luke Skywalker (Bacta Tank)",cat:"Original Trilogy"},
-  {code:"sw0536",name:"Imperial Shuttle Pilot",cat:"Original Trilogy"},
-  {code:"sw0537",name:"AT-ST Driver",cat:"Original Trilogy"},
-  {code:"sw0001",name:"Battle Droid",cat:"Prequel Trilogy"},
-  {code:"sw0003",name:"Darth Maul",cat:"Prequel Trilogy"},
-  {code:"sw0004",name:"Obi-Wan Kenobi (Padawan)",cat:"Prequel Trilogy"},
-  {code:"sw0005",name:"Qui-Gon Jinn",cat:"Prequel Trilogy"},
-  {code:"sw0006",name:"Jar Jar Binks",cat:"Prequel Trilogy"},
-  {code:"sw0007",name:"Anakin Skywalker (Young)",cat:"Prequel Trilogy"},
-  {code:"sw0008",name:"Padmé Amidala (Battle)",cat:"Prequel Trilogy"},
-  {code:"sw0009",name:"Watto",cat:"Prequel Trilogy"},
-  {code:"sw0010",name:"Chancellor Valorum",cat:"Prequel Trilogy"},
-  {code:"sw0012",name:"Nute Gunray",cat:"Prequel Trilogy"},
-  {code:"sw0013",name:"Darth Sidious",cat:"Prequel Trilogy"},
-  {code:"sw0049",name:"Mace Windu",cat:"Prequel Trilogy"},
-  {code:"sw0050",name:"Yoda",cat:"Prequel Trilogy"},
-  {code:"sw0051",name:"Jango Fett",cat:"Prequel Trilogy"},
-  {code:"sw0052",name:"Boba Fett (Young)",cat:"Prequel Trilogy"},
-  {code:"sw0053",name:"Zam Wesell",cat:"Prequel Trilogy"},
-  {code:"sw0054",name:"Clone Trooper",cat:"Prequel Trilogy"},
-  {code:"sw0055",name:"Count Dooku",cat:"Prequel Trilogy"},
-  {code:"sw0056",name:"Obi-Wan Kenobi (Ep II)",cat:"Prequel Trilogy"},
-  {code:"sw0057",name:"Anakin Skywalker (Ep II)",cat:"Prequel Trilogy"},
-  {code:"sw0058",name:"Padmé Amidala (Arena)",cat:"Prequel Trilogy"},
-  {code:"sw0077",name:"Super Battle Droid",cat:"Prequel Trilogy"},
-  {code:"sw0078",name:"Dexter Jettster",cat:"Prequel Trilogy"},
-  {code:"sw0082",name:"General Grievous",cat:"Prequel Trilogy"},
-  {code:"sw0083",name:"Anakin Skywalker (Ep III)",cat:"Prequel Trilogy"},
-  {code:"sw0084",name:"Obi-Wan Kenobi (Ep III)",cat:"Prequel Trilogy"},
-  {code:"sw0085",name:"Commander Cody",cat:"Prequel Trilogy"},
-  {code:"sw0086",name:"Clone Pilot",cat:"Prequel Trilogy"},
-  {code:"sw0098",name:"Boss Nass",cat:"Prequel Trilogy"},
-  {code:"sw0099",name:"Captain Tarpals",cat:"Prequel Trilogy"},
-  {code:"sw0253",name:"Sebulba",cat:"Prequel Trilogy"},
-  {code:"sw0316",name:"Ki-Adi-Mundi",cat:"Prequel Trilogy"},
-  {code:"sw0317",name:"Plo Koon",cat:"Prequel Trilogy"},
-  {code:"sw0318",name:"Kit Fisto",cat:"Prequel Trilogy"},
-  {code:"sw0319",name:"Aayla Secura",cat:"Prequel Trilogy"},
-  {code:"sw0457",name:"Shaak Ti",cat:"Prequel Trilogy"},
-  {code:"sw0328",name:"MagnaGuard",cat:"Prequel Trilogy"},
-  {code:"sw0329",name:"Destroyer Droid",cat:"Prequel Trilogy"},
-  {code:"sw0116",name:"Captain Rex",cat:"Clone Wars"},
-  {code:"sw0117",name:"Ahsoka Tano",cat:"Clone Wars"},
-  {code:"sw0118",name:"Cad Bane",cat:"Clone Wars"},
-  {code:"sw0119",name:"Asajj Ventress",cat:"Clone Wars"},
-  {code:"sw0120",name:"Savage Opress",cat:"Clone Wars"},
-  {code:"sw0121",name:"Hondo Ohnaka",cat:"Clone Wars"},
-  {code:"sw0122",name:"Pre Vizsla",cat:"Clone Wars"},
-  {code:"sw0123",name:"Bo-Katan Kryze (TCW)",cat:"Clone Wars"},
-  {code:"sw0207",name:"Commander Wolffe",cat:"Clone Wars"},
-  {code:"sw0208",name:"Aurra Sing",cat:"Clone Wars"},
-  {code:"sw0235",name:"ARC Trooper",cat:"Clone Wars"},
-  {code:"sw0236",name:"Clone Trooper Commander",cat:"Clone Wars"},
-  {code:"sw0291",name:"Commander Fox",cat:"Clone Wars"},
-  {code:"sw0411",name:"Darth Maul (Robotic Legs)",cat:"Clone Wars"},
-  {code:"sw0496",name:"Ahsoka Tano (White Sabers)",cat:"Clone Wars"},
-  {code:"sw0663",name:"Rey",cat:"Sequel Trilogy"},
-  {code:"sw0664",name:"Finn",cat:"Sequel Trilogy"},
-  {code:"sw0665",name:"Poe Dameron",cat:"Sequel Trilogy"},
-  {code:"sw0666",name:"Kylo Ren",cat:"Sequel Trilogy"},
-  {code:"sw0667",name:"BB-8",cat:"Sequel Trilogy"},
-  {code:"sw0668",name:"Captain Phasma",cat:"Sequel Trilogy"},
-  {code:"sw0669",name:"General Hux",cat:"Sequel Trilogy"},
-  {code:"sw0679",name:"First Order Stormtrooper",cat:"Sequel Trilogy"},
-  {code:"sw0680",name:"Maz Kanata",cat:"Sequel Trilogy"},
-  {code:"sw0712",name:"Supreme Leader Snoke",cat:"Sequel Trilogy"},
-  {code:"sw0756",name:"Rose Tico",cat:"Sequel Trilogy"},
-  {code:"sw0757",name:"Vice Admiral Holdo",cat:"Sequel Trilogy"},
-  {code:"sw0888",name:"Zorii Bliss",cat:"Sequel Trilogy"},
-  {code:"sw0889",name:"Jannah",cat:"Sequel Trilogy"},
-  {code:"sw0890",name:"D-O",cat:"Sequel Trilogy"},
-  {code:"sw0891",name:"First Order TIE Pilot",cat:"Sequel Trilogy"},
-  {code:"sw0893",name:"Sith Trooper",cat:"Sequel Trilogy"},
-  {code:"sw1038",name:"The Mandalorian (Din Djarin)",cat:"The Mandalorian"},
-  {code:"sw1039",name:"Grogu (The Child)",cat:"The Mandalorian"},
-  {code:"sw1040",name:"Cara Dune",cat:"The Mandalorian"},
-  {code:"sw1041",name:"Greef Karga",cat:"The Mandalorian"},
-  {code:"sw1042",name:"Moff Gideon",cat:"The Mandalorian"},
-  {code:"sw1043",name:"The Armorer",cat:"The Mandalorian"},
-  {code:"sw1044",name:"Paz Vizsla",cat:"The Mandalorian"},
-  {code:"sw1045",name:"Dark Trooper",cat:"The Mandalorian"},
-  {code:"sw1063",name:"Bo-Katan Kryze",cat:"The Mandalorian"},
-  {code:"sw1064",name:"Fennec Shand",cat:"The Mandalorian"},
-  {code:"sw1065",name:"Boba Fett (Re-Armored)",cat:"The Mandalorian"},
-  {code:"sw1066",name:"Koska Reeves",cat:"The Mandalorian"},
-  {code:"sw0591",name:"Kanan Jarrus",cat:"Rebels"},
-  {code:"sw0592",name:"Hera Syndulla",cat:"Rebels"},
-  {code:"sw0593",name:"Sabine Wren",cat:"Rebels"},
-  {code:"sw0595",name:"The Inquisitor",cat:"Rebels"},
-  {code:"sw0596",name:"Agent Kallus",cat:"Rebels"},
-  {code:"sw0672",name:"Grand Admiral Thrawn",cat:"Rebels"},
-  {code:"sw0673",name:"Imperial Super Commando",cat:"Rebels"},
-  {code:"sw0746",name:"Jyn Erso",cat:"Rogue One"},
-  {code:"sw0747",name:"Cassian Andor",cat:"Rogue One"},
-  {code:"sw0748",name:"K-2SO",cat:"Rogue One"},
-  {code:"sw0749",name:"Chirrut Îmwe",cat:"Rogue One"},
-  {code:"sw0750",name:"Baze Malbus",cat:"Rogue One"},
-  {code:"sw0751",name:"Director Krennic",cat:"Rogue One"},
-  {code:"sw0752",name:"Bodhi Rook",cat:"Rogue One"},
-  {code:"sw0753",name:"Saw Gerrera",cat:"Rogue One"},
-  {code:"sw0754",name:"Death Trooper",cat:"Rogue One"},
-  {code:"sw0755",name:"Shoretrooper",cat:"Rogue One"},
-  {code:"sw0847",name:"Han Solo (Young)",cat:"Solo"},
-  {code:"sw0848",name:"Qi'ra",cat:"Solo"},
-  {code:"sw0849",name:"Tobias Beckett",cat:"Solo"},
-  {code:"sw0850",name:"Val",cat:"Solo"},
-  {code:"sw0851",name:"Rio Durant",cat:"Solo"},
-  {code:"sw0852",name:"L3-37",cat:"Solo"},
-  {code:"sw0853",name:"Enfys Nest",cat:"Solo"},
-  {code:"sw0854",name:"Dryden Vos",cat:"Solo"},
-  {code:"sw0855",name:"Lando Calrissian (Young)",cat:"Solo"},
-  {code:"sw1185",name:"Reva (Third Sister)",cat:"Obi-Wan Kenobi"},
-  {code:"sw1186",name:"Fifth Brother",cat:"Obi-Wan Kenobi"},
-  {code:"sw1187",name:"Tala Durith",cat:"Obi-Wan Kenobi"},
-  {code:"sw1188",name:"Young Princess Leia",cat:"Obi-Wan Kenobi"},
-  {code:"sw1200",name:"Cassian Andor (Series)",cat:"Andor"},
-  {code:"sw1201",name:"Dedra Meero",cat:"Andor"},
-  {code:"sw1202",name:"Luthen Rael",cat:"Andor"},
-  {code:"sw1203",name:"Syril Karn",cat:"Andor"},
-  {code:"sw1160",name:"Boba Fett (BoF)",cat:"Book of Boba Fett"},
-  {code:"sw1161",name:"Fennec Shand (BoF)",cat:"Book of Boba Fett"},
-  {code:"sw1162",name:"Black Krrsantan",cat:"Book of Boba Fett"},
-  {code:"sw1163",name:"Cad Bane (BoF)",cat:"Book of Boba Fett"},
-  {code:"sw1220",name:"Ahsoka Tano (Series)",cat:"Ahsoka"},
-  {code:"sw1221",name:"Sabine Wren (Series)",cat:"Ahsoka"},
-  {code:"sw1222",name:"Hera Syndulla (Series)",cat:"Ahsoka"},
-  {code:"sw1223",name:"Morgan Elsbeth",cat:"Ahsoka"},
-  {code:"sw1224",name:"Baylan Skoll",cat:"Ahsoka"},
-  {code:"sw1225",name:"Shin Hati",cat:"Ahsoka"},
-  {code:"sw1226",name:"Huyang",cat:"Ahsoka"},
-  {code:"sw1227",name:"Grand Admiral Thrawn (Series)",cat:"Ahsoka"},
-];
-
-const imgUrl  = c => `https://img.bricklink.com/ItemImage/MN/0/${c}.png`;
-const pageUrl = c => `https://www.bricklink.com/v2/catalog/catalogitem.page?M=${c}`;
-const initials = n => n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
-const RANK_COLORS = ['#ffd700','#c0c0c0','#cd7f32'];
-
-// ─── State ─────────────────────────────────────────────────────────────────────
-let collection = new Set();
-let wishlist   = [];
-let activeTab  = 'discover';
-let filterCat  = 'All';
-let driveFileId = null;
-let accessToken = null;
-let saveTimer   = null;
-let gapiReady   = false;
-let gisReady    = false;
-let tokenClient = null;
-
-// ─── Google API init ───────────────────────────────────────────────────────────
-function gapiLoaded() {
-  gapi.load('client', async () => {
-    await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY] });
-    gapiReady = true;
-    maybeAutoSignIn();
-  });
-}
-
-function gisLoaded() {
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: SCOPES,
-    callback: async (resp) => {
-      if (resp.error) { showAuth(); return; }
-      accessToken = resp.access_token;
-      gapi.client.setToken({ access_token: accessToken });
-      await loadFromDrive();
-      showApp();
-    },
-  });
-  gisReady = true;
-  maybeAutoSignIn();
-}
-
 function maybeAutoSignIn() {
   if (!gapiReady || !gisReady) return;
-  // Try silent sign-in first
   tokenClient.requestAccessToken({ prompt: '' });
 }
 
 function handleSignIn() {
-  if (!gapiReady || !gisReady) {
-    // APIs not loaded yet — wait a moment and retry
-    showLoading('LOADING…');
-    setTimeout(handleSignIn, 500);
-    return;
-  }
   showLoading('SIGNING IN…');
+  if (!gapiReady || !gisReady) { setTimeout(handleSignIn, 400); return; }
   tokenClient.requestAccessToken({ prompt: 'consent' });
 }
 
 function handleSignOut() {
-  if (accessToken) google.accounts.oauth2.revoke(accessToken, () => {});
+  if (accessToken) google.accounts.oauth2.revoke(accessToken, ()=>{});
   accessToken = null; driveFileId = null;
   collection = new Set(); wishlist = [];
   showAuth();
 }
 
-// ─── UI state ─────────────────────────────────────────────────────────────────
 function showAuth()    { document.getElementById('auth-screen').style.display='flex'; document.getElementById('loading-screen').style.display='none'; document.getElementById('main-app').style.display='none'; }
 function showLoading(t){ document.getElementById('loading-text').textContent=t; document.getElementById('loading-screen').style.display='flex'; document.getElementById('auth-screen').style.display='none'; document.getElementById('main-app').style.display='none'; }
-function showApp()     { document.getElementById('main-app').style.display='flex'; document.getElementById('loading-screen').style.display='none'; document.getElementById('auth-screen').style.display='none'; updateStats(); renderTab('discover'); }
+function showApp()     { document.getElementById('main-app').style.display='flex'; document.getElementById('loading-screen').style.display='none'; document.getElementById('auth-screen').style.display='none'; buildCatUI(); updateStats(); renderTab('discover'); }
 
-// ─── Drive: load ──────────────────────────────────────────────────────────────
+// ─── Drive ────────────────────────────────────────────────────
 async function loadFromDrive() {
-  showLoading('LOADING YOUR DATA…');
+  showLoading('LOADING YOUR COLLECTION…');
   try {
-    const list = await gapi.client.drive.files.list({
-      spaces: 'appDataFolder',
-      fields: 'files(id,name)',
-      q: `name='${FILE_NAME}'`,
-    });
+    const list = await gapi.client.drive.files.list({ spaces:'appDataFolder', fields:'files(id,name)', q:`name='${FILE_NAME}'` });
     const files = list.result.files;
     if (files && files.length > 0) {
       driveFileId = files[0].id;
-      const res = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
+      const res = await gapi.client.drive.files.get({ fileId: driveFileId, alt:'media' });
       const data = typeof res.result === 'string' ? JSON.parse(res.result) : res.result;
       collection = new Set(data.collection || []);
       wishlist   = data.wishlist || [];
     }
-  } catch(e) {
-    console.warn('Drive load error:', e);
-  }
+  } catch(e) { console.warn('Drive load error:', e); }
 }
 
-// ─── Drive: save (debounced) ──────────────────────────────────────────────────
 function scheduleSave() {
   setSyncStatus('saving');
   clearTimeout(saveTimer);
@@ -606,43 +484,30 @@ function scheduleSave() {
 }
 
 async function saveToDrive() {
-  const body = JSON.stringify({ collection: [...collection], wishlist });
+  const body = JSON.stringify({ collection:[...collection], wishlist });
   try {
     if (driveFileId) {
-      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body,
-      });
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, { method:'PATCH', headers:{ Authorization:`Bearer ${accessToken}`, 'Content-Type':'application/json' }, body });
     } else {
-      const meta = await gapi.client.drive.files.create({ resource: { name: FILE_NAME, parents: ['appDataFolder'] }, fields: 'id' });
+      const meta = await gapi.client.drive.files.create({ resource:{ name:FILE_NAME, parents:['appDataFolder'] }, fields:'id' });
       driveFileId = meta.result.id;
-      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body,
-      });
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, { method:'PATCH', headers:{ Authorization:`Bearer ${accessToken}`, 'Content-Type':'application/json' }, body });
     }
     setSyncStatus('saved');
-    setTimeout(() => setSyncStatus('idle'), 2500);
-  } catch(e) {
-    console.warn('Drive save error:', e);
-    setSyncStatus('error');
-  }
+    setTimeout(()=>setSyncStatus('idle'), 2500);
+  } catch(e) { setSyncStatus('error'); }
 }
 
 function setSyncStatus(s) {
-  const bar = document.getElementById('sync-bar');
-  const msg = document.getElementById('sync-msg');
-  const icon = document.getElementById('sync-icon');
-  bar.className = '';
-  if (s === 'saving') { bar.classList.add('visible','saving'); msg.textContent='Syncing to Google Drive…'; document.querySelector('#sync-bar .sync-dot').classList.add('pulse'); icon.textContent='🔄'; }
-  else if (s === 'saved') { bar.classList.add('visible','saved');  msg.textContent='Saved to Google Drive ✓'; document.querySelector('#sync-bar .sync-dot').classList.remove('pulse'); icon.textContent='☁️'; }
-  else if (s === 'error') { bar.classList.add('visible','error');  msg.textContent='Sync failed — check connection'; icon.textContent='⚠️'; }
+  const bar=document.getElementById('sync-bar'), msg=document.getElementById('sync-msg'), icon=document.getElementById('sync-icon');
+  bar.className='';
+  if (s==='saving') { bar.classList.add('visible','saving'); msg.textContent='Syncing…'; document.querySelector('#sync-bar .sync-dot').classList.add('pulse'); icon.textContent='🔄'; }
+  else if (s==='saved')  { bar.classList.add('visible','saved');  msg.textContent='Saved ✓'; document.querySelector('#sync-bar .sync-dot').classList.remove('pulse'); icon.textContent='☁️'; }
+  else if (s==='error')  { bar.classList.add('visible','error');  msg.textContent='Sync failed'; icon.textContent='⚠️'; }
   else { bar.classList.remove('visible'); icon.textContent='☁️'; }
 }
 
-// ─── Actions ──────────────────────────────────────────────────────────────────
+// ─── Actions ──────────────────────────────────────────────────
 function addToCollection(code) { collection.add(code); wishlist=wishlist.filter(c=>c!==code); scheduleSave(); renderCurrent(); updateStats(); toast('✓ Added to collection'); }
 function removeFromCollection(code) { collection.delete(code); scheduleSave(); renderCurrent(); updateStats(); }
 function addToWishlist(code) { if(!wishlist.includes(code)&&!collection.has(code)){wishlist.push(code);scheduleSave();renderCurrent();updateStats();toast('⭐ Added to wishlist');} }
@@ -650,100 +515,194 @@ function removeFromWishlist(code) { wishlist=wishlist.filter(c=>c!==code); sched
 function moveWish(code,dir) { const i=wishlist.indexOf(code); if(i<0)return; const j=i+dir; if(j<0||j>=wishlist.length)return; [wishlist[i],wishlist[j]]=[wishlist[j],wishlist[i]]; scheduleSave(); renderTab('wishlist'); }
 function markOwned(code) { collection.add(code); wishlist=wishlist.filter(c=>c!==code); scheduleSave(); renderCurrent(); updateStats(); toast('✓ Marked as owned!'); }
 
-// ─── Stats ────────────────────────────────────────────────────────────────────
+// ─── Stats ────────────────────────────────────────────────────
 function updateStats() {
   const left = Math.max(0, FIGURES.length - collection.size - wishlist.length);
   document.getElementById('stat-owned').textContent    = collection.size;
   document.getElementById('stat-wish').textContent     = wishlist.length;
+  document.getElementById('stat-total').textContent    = left;
   document.getElementById('tc-discover').textContent   = left;
   document.getElementById('tc-collection').textContent = collection.size;
   document.getElementById('tc-wishlist').textContent   = wishlist.length;
 }
 
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
+// ─── Category UI ─────────────────────────────────────────────
+function allCats() {
+  const cats = new Set(FIGURES.map(f=>f.cat));
+  return ['All', ...Object.keys(SHOW_COLORS).filter(c=>cats.has(c)), ...[...cats].filter(c=>!SHOW_COLORS[c])];
+}
+
+function buildCatUI() {
+  const cats = allCats();
+  // Chips strip
+  const strip = document.getElementById('cat-strip');
+  strip.innerHTML = cats.map(c =>
+    `<div class="cat-chip ${activeCat===c?'active':''}" onclick="selectCat('${c.replace(/'/g,"\\'")}')">
+      ${c !== 'All' ? `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${SHOW_COLORS[c]||'#666'};margin-right:4px;vertical-align:middle"></span>` : ''}${c}
+    </div>`).join('');
+  // Modal list
+  document.getElementById('cat-list').innerHTML = cats.map(c =>
+    `<div class="cat-option ${activeCat===c?'active':''}" onclick="selectCat('${c.replace(/'/g,"\\'")}');closeFilter()">
+      <div class="cat-dot" style="background:${c!=='All'?(SHOW_COLORS[c]||'#666'):'transparent'}"></div>
+      <span class="cat-label">${c}</span>
+    </div>`).join('');
+  // Update filter button
+  const btn = document.getElementById('filter-btn');
+  if (activeCat === 'All') { btn.textContent='☰ Show'; btn.classList.remove('active'); }
+  else { btn.textContent = activeCat.length > 18 ? activeCat.slice(0,16)+'…' : activeCat; btn.classList.add('active'); }
+}
+
+function selectCat(cat) {
+  activeCat = cat;
+  buildCatUI();
+  renderCurrent();
+}
+
+// ─── Tabs ─────────────────────────────────────────────────────
 function switchTab(tab) {
   activeTab = tab;
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
-  document.getElementById('toolbar').style.display = tab==='wishlist'?'none':'flex';
+  const tb = document.getElementById('toolbar');
+  const cs = document.getElementById('cat-strip');
+  if (tab === 'wishlist') { tb.style.display='none'; cs.style.display='none'; }
+  else { tb.style.display='flex'; cs.style.display='flex'; }
   renderTab(tab);
 }
 function renderCurrent() { renderTab(activeTab); }
 
-// ─── Render ───────────────────────────────────────────────────────────────────
+// ─── Render ───────────────────────────────────────────────────
 function renderTab(tab) {
   const q   = (document.getElementById('search-input')?.value||'').toLowerCase();
   const el  = document.getElementById('content');
   const lbl = document.getElementById('section-label');
 
-  if (tab==='discover') {
-    const figs = FIGURES.filter(f=>!collection.has(f.code)&&!wishlist.includes(f.code)&&(f.name.toLowerCase().includes(q)||f.code.includes(q))&&(filterCat==='All'||f.cat===filterCat));
-    lbl.textContent = `${figs.length} figures to discover`;
-    el.innerHTML = figs.length ? `<div class="figure-grid">${figs.map(f=>figCard(f,'browse')).join('')}</div>`
-      : `<div class="empty"><div class="empty-icon">🌌</div><div class="empty-text">${q||filterCat!=='All'?'No figures match.':'All figures accounted for!'}</div></div>`;
+  if (!figuresLoaded) {
+    el.innerHTML = skeletonGrid(12);
+    lbl.textContent = 'Loading figures…';
+    return;
   }
-  else if (tab==='collection') {
-    const figs = FIGURES.filter(f=>collection.has(f.code)&&(f.name.toLowerCase().includes(q)||f.code.includes(q))&&(filterCat==='All'||f.cat===filterCat));
-    const pct  = FIGURES.length?((collection.size/FIGURES.length)*100).toFixed(1):0;
+
+  if (tab === 'discover') {
+    const figs = FIGURES.filter(f =>
+      !collection.has(f.code) && !wishlist.includes(f.code) &&
+      (f.name.toLowerCase().includes(q) || f.code.includes(q)) &&
+      (activeCat === 'All' || f.cat === activeCat)
+    );
+    lbl.textContent = `${figs.length} figures to discover`;
+    el.innerHTML = figs.length
+      ? `<div class="figure-grid">${figs.map(f=>figCard(f,'browse')).join('')}</div>`
+      : `<div class="empty"><div class="empty-icon">🌌</div><div class="empty-text">${q||activeCat!=='All'?'No figures match.':'All figures accounted for! 🎉'}</div></div>`;
+  }
+  else if (tab === 'collection') {
+    const figs = FIGURES.filter(f =>
+      collection.has(f.code) &&
+      (f.name.toLowerCase().includes(q) || f.code.includes(q)) &&
+      (activeCat === 'All' || f.cat === activeCat)
+    );
+    const pct = FIGURES.length ? ((collection.size/FIGURES.length)*100).toFixed(1) : 0;
     lbl.textContent = `${collection.size} / ${FIGURES.length} owned · ${pct}% complete`;
     el.innerHTML = `<div class="progress-wrap"><div class="progress-bg"><div class="progress-fill" style="width:${pct}%"></div></div></div>`
-      + (figs.length ? `<div class="figure-grid">${figs.map(f=>figCard(f,'collection')).join('')}</div>`
-      : `<div class="empty"><div class="empty-icon">📦</div><div class="empty-text">${q?'No figures match.':'Add figures from Discover!'}</div></div>`);
+      + (figs.length
+        ? `<div class="figure-grid">${figs.map(f=>figCard(f,'collection')).join('')}</div>`
+        : `<div class="empty"><div class="empty-icon">📦</div><div class="empty-text">${q||activeCat!=='All'?'No figures match.':'Add figures from Discover!'}</div></div>`);
   }
-  else if (tab==='wishlist') {
+  else if (tab === 'wishlist') {
     const figs = wishlist.map(c=>FIGURES.find(f=>f.code===c)).filter(Boolean);
     lbl.textContent = `${figs.length} figures · ranked by priority`;
-    el.innerHTML = figs.length ? `<div class="wishlist-list">${figs.map((f,i)=>wishRow(f,i,figs.length)).join('')}</div>`
+    el.innerHTML = figs.length
+      ? `<div class="wishlist-list">${figs.map((f,i)=>wishRow(f,i,figs.length)).join('')}</div>`
       : `<div class="empty"><div class="empty-icon">⭐</div><div class="empty-text">Your wishlist is empty.\nTap ⭐ on figures in Discover!</div></div>`;
   }
 }
 
 function figCard(f, mode) {
-  const color = CAT_COLORS[f.cat]||'#888';
-  const img   = `<img class="fig-img" src="${imgUrl(f.code)}" alt="${f.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="fig-fallback" style="display:none;--cat-color:${color}">${initials(f.name)}</div>`;
-  const acts  = mode==='browse'
+  const color = SHOW_COLORS[f.cat] || '#666';
+  // Use Rebrickable image first, fallback to BrickLink CDN, then initials
+  const imgSrc = f.img || blImg(f.code);
+  const img = `<img class="fig-img" src="${imgSrc}" alt="${f.name}" loading="lazy"
+    onerror="if(!this.dataset.tried){this.dataset.tried=1;this.src='${blImg(f.code)}'}else{this.style.display='none';this.nextElementSibling.style.display='flex'}">
+    <div class="fig-fallback" style="display:none;--cat-color:${color}">${initials(f.name)}</div>`;
+  const acts = mode==='browse'
     ? `<div class="fig-actions"><button class="fig-btn fig-btn-wish" onclick="addToWishlist('${f.code}')">⭐</button><button class="fig-btn fig-btn-own" onclick="addToCollection('${f.code}')">✓</button></div>`
     : `<button class="fig-btn-full" onclick="removeFromCollection('${f.code}')">✓ OWNED</button>`;
-  return `<div class="figure-card" style="--cat-color:${color}"><div class="fig-img-wrap">${img}</div><div class="fig-name">${f.name}</div><a class="fig-code-link" href="${pageUrl(f.code)}" target="_blank" rel="noopener"><span class="fig-code">${f.code.toUpperCase()}</span> <span style="font-size:10px">🔗</span></a>${acts}</div>`;
+  return `<div class="figure-card" style="--cat-color:${color}">
+    <div class="fig-img-wrap">${img}</div>
+    <div class="fig-name">${f.name}</div>
+    <a class="fig-code-link" href="${blPage(f.code)}" target="_blank" rel="noopener">
+      <span class="fig-code">${f.code.toUpperCase()}</span><span style="font-size:9px">🔗</span>
+    </a>${acts}</div>`;
 }
 
-function wishRow(f,idx,total) {
-  const color=CAT_COLORS[f.cat]||'#888', rank=idx+1, rc=rank<=3?RANK_COLORS[rank-1]:'#4a4f70';
-  const img=`<img class="wish-img" src="${imgUrl(f.code)}" alt="${f.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="wish-fallback" style="display:none;--cat-color:${color}">${initials(f.name)}</div>`;
-  return `<div class="wish-row" style="--cat-color:${color}"><div class="wish-rank" style="border-color:${rc};background:${rc}22;color:${rc}">${rank}</div>${img}<div class="wish-info"><div class="wish-name">${f.name}</div><div class="wish-meta"><span class="wish-code">${f.code.toUpperCase()}</span><span class="wish-cat"> · ${f.cat}</span></div><a class="wish-bl" href="${pageUrl(f.code)}" target="_blank" rel="noopener">View on BrickLink →</a></div><div class="wish-controls"><button class="wc-btn wc-own" onclick="markOwned('${f.code}')">✓</button><div class="wc-arrows"><button class="wc-arrow" onclick="moveWish('${f.code}',-1)" ${idx===0?'disabled':''}>▲</button><button class="wc-arrow" onclick="moveWish('${f.code}',1)" ${idx===total-1?'disabled':''}>▼</button></div><button class="wc-btn wc-remove" onclick="removeFromWishlist('${f.code}')">✕</button></div></div>`;
+function wishRow(f, idx, total) {
+  const color=SHOW_COLORS[f.cat]||'#666', rank=idx+1, rc=rank<=3?RANK_COLORS[rank-1]:'#4a4f70';
+  const imgSrc = f.img || blImg(f.code);
+  const img=`<img class="wish-img" src="${imgSrc}" alt="${f.name}" loading="lazy"
+    onerror="if(!this.dataset.tried){this.dataset.tried=1;this.src='${blImg(f.code)}'}else{this.style.display='none';this.nextElementSibling.style.display='flex'}">
+    <div class="wish-fallback" style="display:none;--cat-color:${color}">${initials(f.name)}</div>`;
+  return `<div class="wish-row" style="--cat-color:${color}">
+    <div class="wish-rank" style="border-color:${rc};background:${rc}22;color:${rc}">${rank}</div>
+    ${img}
+    <div class="wish-info">
+      <div class="wish-name">${f.name}</div>
+      <div class="wish-meta"><span class="wish-code">${f.code.toUpperCase()}</span><span class="wish-cat"> · ${f.cat}</span></div>
+      <a class="wish-bl" href="${blPage(f.code)}" target="_blank" rel="noopener">View on BrickLink →</a>
+    </div>
+    <div class="wish-controls">
+      <button class="wc-btn wc-own" onclick="markOwned('${f.code}')">✓</button>
+      <div class="wc-arrows">
+        <button class="wc-arrow" onclick="moveWish('${f.code}',-1)" ${idx===0?'disabled':''}>▲</button>
+        <button class="wc-arrow" onclick="moveWish('${f.code}',1)" ${idx===total-1?'disabled':''}>▼</button>
+      </div>
+      <button class="wc-btn wc-remove" onclick="removeFromWishlist('${f.code}')">✕</button>
+    </div></div>`;
 }
 
-// ─── Category filter ──────────────────────────────────────────────────────────
-function openFilter() {
-  document.getElementById('cat-list').innerHTML = CATEGORIES.map(cat=>
-    `<div class="cat-option ${filterCat===cat?'active':''}" onclick="selectCat('${cat}')">
-      ${cat!=='All'?`<div class="cat-dot" style="background:${CAT_COLORS[cat]}"></div>`:'<div style="width:8px"></div>'}
-      <span class="cat-label">${cat}</span></div>`).join('');
-  document.getElementById('modal').classList.add('open');
+function skeletonGrid(n) {
+  return `<div class="skeleton-grid">${Array(n).fill(`<div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div><div class="skeleton-line w40"></div></div>`).join('')}</div>`;
 }
+
+// ─── Filter modal ─────────────────────────────────────────────
+function openFilter() { buildCatUI(); document.getElementById('modal').classList.add('open'); }
 function closeFilter() { document.getElementById('modal').classList.remove('open'); }
-function selectCat(cat) {
-  filterCat=cat;
-  const btn=document.getElementById('filter-btn');
-  btn.textContent=cat==='All'?'☰ Era':cat.split(' ').slice(0,2).join(' ');
-  btn.classList.toggle('active',cat!=='All');
-  closeFilter(); renderCurrent();
-}
 
-// ─── Toast ────────────────────────────────────────────────────────────────────
+// ─── Toast ────────────────────────────────────────────────────
 let toastTimer;
 function toast(msg) {
   const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show');
   clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),1800);
 }
 
-// ─── Bootstrap Google APIs ────────────────────────────────────────────────────
-window.gapiLoaded = gapiLoaded;
-window.gisLoaded  = gisLoaded;
+// ─── Bootstrap ────────────────────────────────────────────────
+(function() {
+  // Load Google APIs
+  const s1=document.createElement('script'); s1.src='https://apis.google.com/js/api.js';
+  s1.onload=()=>gapi.load('client',async()=>{
+    await gapi.client.init({ discoveryDocs:[DISCOVERY] });
+    gapiReady=true; maybeAutoSignIn();
+  }); document.head.appendChild(s1);
 
-// Load scripts dynamically so callbacks fire correctly
-(function(){
-  const s1=document.createElement('script'); s1.src='https://apis.google.com/js/api.js'; s1.onload=()=>gapi.load('client',async()=>{await gapi.client.init({apiKey:API_KEY,discoveryDocs:[DISCOVERY]});gapiReady=true;maybeAutoSignIn();}); document.head.appendChild(s1);
-  const s2=document.createElement('script'); s2.src='https://accounts.google.com/gsi/client'; s2.onload=()=>{tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:SCOPES,callback:async(resp)=>{if(resp.error){showAuth();return;}accessToken=resp.access_token;gapi.client.setToken({access_token:accessToken});await loadFromDrive();showApp();}});gisReady=true;maybeAutoSignIn();}; document.head.appendChild(s2);
+  const s2=document.createElement('script'); s2.src='https://accounts.google.com/gsi/client';
+  s2.onload=()=>{
+    tokenClient=google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID, scope: SCOPES,
+      callback: async(resp) => {
+        if (resp.error) { showAuth(); return; }
+        accessToken=resp.access_token;
+        gapi.client.setToken({ access_token: accessToken });
+        // Load Drive data and Rebrickable figures in parallel
+        showLoading('LOADING YOUR DATA…');
+        await Promise.all([ loadFromDrive(), loadFigures() ]);
+        // Show user avatar
+        try {
+          const info = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers:{Authorization:`Bearer ${accessToken}`} });
+          const u = await info.json();
+          if (u.picture) { const av=document.getElementById('user-avatar'); av.src=u.picture; av.style.display='block'; }
+        } catch(e){}
+        showApp();
+      }
+    });
+    gisReady=true; maybeAutoSignIn();
+  }; document.head.appendChild(s2);
 })();
 </script>
 </body>
