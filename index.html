@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LEGO Star Wars · Minifigure Tracker</title>
+<title>LEGO Star Wars · Minifigure Tracker v6</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* === RESET & BASE === */
@@ -531,10 +531,519 @@ header {
 'use strict';
 
 // ══════════════════════════════════════════
-// CONFIG — fill in your keys here
+// CONFIG
 // ══════════════════════════════════════════
 const GOOGLE_CLIENT_ID    = '1077117676417-9eb51tcdg19qfh13d98a1vtq7o68r8k3.apps.googleusercontent.com';
 const REBRICKABLE_API_KEY = '24aa9f228735a840980c9e275fa597bc';
+
+// ── BrickLink helpers ──────────────────────
+const blImg  = c => `https://img.bricklink.com/ItemImage/MN/0/${c}.png`;
+const blPage = c => `https://www.bricklink.com/v2/catalog/catalogitem.page?M=${c}`;
+const initials = n => n.split(' ').slice(0,2).map(w => w[0]||'').join('').toUpperCase();
+const RANK_COLORS = ['#ffd700','#c0c0c0','#cd7f32'];
+
+// ── Show/Movie colours ─────────────────────
+const SHOW_COLORS = {
+  "Episode I – The Phantom Menace":      "#3b82f6",
+  "Episode II – Attack of the Clones":   "#60a5fa",
+  "Episode III – Revenge of the Sith":   "#818cf8",
+  "The Clone Wars":                       "#ef4444",
+  "Episode IV – A New Hope":             "#f59e0b",
+  "Episode V – The Empire Strikes Back": "#fbbf24",
+  "Episode VI – Return of the Jedi":     "#fcd34d",
+  "Rebels":                              "#f97316",
+  "Rogue One":                           "#6b7280",
+  "Solo":                                "#d97706",
+  "Episode VII – The Force Awakens":     "#8b5cf6",
+  "Episode VIII – The Last Jedi":        "#a78bfa",
+  "Episode IX – The Rise of Skywalker":  "#c4b5fd",
+  "The Mandalorian":                     "#10b981",
+  "The Book of Boba Fett":               "#dc2626",
+  "Obi-Wan Kenobi":                      "#06b6d4",
+  "Andor":                               "#64748b",
+  "Ahsoka":                              "#7c3aed",
+  "The Acolyte":                         "#ec4899",
+  "Other / Expanded Universe":           "#4a4f70",
+};
+
+function guessCategory(name) {
+  const n = name.toLowerCase();
+  if (/qui.gon|jar jar|watto|nute gunray|boss nass|sebulba|tarpals|valorum|naboo.*pilot|phantom menace/.test(n)) return "Episode I – The Phantom Menace";
+  if (/jango fett|zam wesell|dexter|clone.*ep.?ii|padm[eé].*arena|obi.wan.*ep.?ii|anakin.*ep.?ii|count dooku|attack of the clones/.test(n)) return "Episode II – Attack of the Clones";
+  if (/commander cody|general grievous|mustafar|anakin.*ep.?iii|obi.wan.*ep.?iii|revenge of the sith|clone.*ep.?iii/.test(n)) return "Episode III – Revenge of the Sith";
+  if (/ahsoka|captain rex|cad bane|asajj ventress|savage opress|hondo|pre vizsla|bo.katan.*tcw|aurra sing|arc trooper|wolffe|commander fox|clone wars/.test(n)) return "The Clone Wars";
+  if (/ezra bridger|kanan jarrus|hera syndulla.*reb|sabine.*reb|zeb|chopper|agent kallus|inquisitor.*reb|thrawn.*reb|rebels/.test(n)) return "Rebels";
+  if (/jyn erso|cassian.*rogue|k-2so|chirrut|baze malbus|krennic|bodhi rook|saw gerrera|death trooper|shoretrooper|rogue one/.test(n)) return "Rogue One";
+  if (/qi.ra|tobias beckett|rio durant|l3-37|enfys nest|dryden vos|han.*young|lando.*young|solo.*film/.test(n)) return "Solo";
+  if (/new hope|biggs|wedge antilles|hammerhead|greedo|grand moff tarkin|admiral ackbar|jawas|tusken raider|ugnaught|lobot|episode iv/.test(n)) return "Episode IV – A New Hope";
+  if (/hoth|snowtrooper|at-at driver|empire strikes back|episode v/.test(n)) return "Episode V – The Empire Strikes Back";
+  if (/endor|ewok|wicket|gamorrean|boushh|return of the jedi|episode vi/.test(n)) return "Episode VI – Return of the Jedi";
+  if (/finn|poe dameron|bb-8|captain phasma|kylo ren|maz kanata|first order.*vii|force awakens|episode vii/.test(n)) return "Episode VII – The Force Awakens";
+  if (/rose tico|vice admiral holdo|last jedi|episode viii/.test(n)) return "Episode VIII – The Last Jedi";
+  if (/zorii bliss|jannah|sith trooper|rise of skywalker|episode ix/.test(n)) return "Episode IX – The Rise of Skywalker";
+  if (/mandalorian|din djarin|grogu|cara dune|greef karga|moff gideon|the armorer|paz vizsla|dark trooper|koska reeves/.test(n)) return "The Mandalorian";
+  if (/black krrsantan|cad bane.*boba|book of boba fett/.test(n)) return "The Book of Boba Fett";
+  if (/reva|third sister|fifth brother|tala durith|young.*leia|kenobi.*series/.test(n)) return "Obi-Wan Kenobi";
+  if (/dedra meero|luthen rael|syril karn|andor.*series/.test(n)) return "Andor";
+  if (/baylan skoll|shin hati|morgan elsbeth|huyang|ahsoka.*series|sabine.*series/.test(n)) return "Ahsoka";
+  if (/acolyte|mae |osha /.test(n)) return "The Acolyte";
+  if (/darth vader|luke skywalker|han solo|princess leia|obi.wan|chewbacca|c-3po|r2-d2|lando calrissian|stormtrooper|tie.*pilot|imperial|rebel|boba fett|r2|r4|r5|at-st|scout trooper|royal guard|death star/.test(n)) return "Episode IV – A New Hope";
+  if (/darth maul|qui-gon|anakin|padm[eé]|battle droid|clone trooper|mace windu|yoda|count dooku|ki-adi|plo koon|kit fisto|aayla|shaak ti|bail organa|magna|destroyer droid/.test(n)) return "Episode I – The Phantom Menace";
+  return "Other / Expanded Universe";
+}
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let FIGURES      = [];
+let figuresLoaded = false;
+let collection   = new Set();
+let wishlist     = [];
+let activeTab    = 'discover';
+let activeCat    = 'All';
+let accessToken  = null;
+let driveFileId  = null;
+let saveTimer    = null;
+let gapiReady    = false;
+let gisReady     = false;
+let tokenClient  = null;
+
+// Infinite scroll state
+let visibleCount   = 30;   // cards currently rendered
+const PAGE_SIZE    = 30;   // cards to add per scroll
+let currentFigs    = [];   // filtered list for current view
+let scrollObserver = null;
+
+// ── LocalStorage keys ──────────────────────
+const CACHE_KEY    = 'sw_figs_v4';
+const CACHE_TS     = 'sw_figs_ts_v4';
+const CACHE_AGE    = 30 * 24 * 60 * 60 * 1000;
+const TOKEN_KEY    = 'sw_access_token';
+
+// ══════════════════════════════════════════
+// TOKEN PERSISTENCE (skip login on return)
+// ══════════════════════════════════════════
+function saveToken(token) {
+  try { localStorage.setItem(TOKEN_KEY, token); } catch(e) {}
+}
+
+function loadSavedToken() {
+  try { return localStorage.getItem(TOKEN_KEY); } catch(e) {}
+  return null;
+}
+
+function clearSavedToken() {
+  try { localStorage.removeItem(TOKEN_KEY); } catch(e) {}
+}
+
+// ══════════════════════════════════════════
+// REBRICKABLE LOADER
+// ══════════════════════════════════════════
+async function loadFigures() {
+  try {
+    const ts = localStorage.getItem(CACHE_TS);
+    if (ts && Date.now() - Number(ts) < CACHE_AGE) {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        FIGURES = JSON.parse(cached);
+        if (FIGURES.length > 0) { figuresLoaded = true; progress(`Loaded ${FIGURES.length} figures (cached)`); return; }
+      }
+    }
+  } catch(e) {}
+
+  progress('Connecting to Rebrickable…');
+  let url  = `https://rebrickable.com/api/v3/lego/minifigs/?set_num=sw&page_size=50&ordering=set_num`;
+  const seen = new Set(), all = [];
+  let page   = 1;
+  const delay = ms => new Promise(r => setTimeout(r, ms));
+
+  while (url) {
+    progress(`Loading page ${page}… (${all.length} figures so far)`);
+    let res;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      res = await fetch(url, { headers: { 'Authorization': `key ${REBRICKABLE_API_KEY}` } });
+      if (res.status === 429) { progress(`Rate limited — waiting ${attempt*2}s…`); await delay(attempt * 2000); continue; }
+      break;
+    }
+    if (res.status === 401) throw new Error('Invalid Rebrickable API key');
+    if (res.status === 429) throw new Error('Rate limited. Wait a minute and reload.');
+    if (!res.ok)            throw new Error(`Rebrickable HTTP ${res.status}`);
+
+    const data = await res.json();
+    for (const fig of (data.results || [])) {
+      if (!/^sw\d/i.test(fig.set_num)) continue;
+      const code = fig.set_num.toLowerCase().replace(/-\d+$/, '');
+      if (seen.has(code)) continue;
+      seen.add(code);
+      all.push({ code, name: fig.name, cat: guessCategory(fig.name), img: fig.set_img_url || null });
+    }
+    url = data.next || null;
+    page++;
+    if (url) await delay(600);
+  }
+
+  if (all.length === 0) throw new Error('No figures returned — check Rebrickable API key');
+  FIGURES = all; figuresLoaded = true;
+  progress(`Loaded ${FIGURES.length} Star Wars figures ✓`);
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(FIGURES)); localStorage.setItem(CACHE_TS, String(Date.now())); } catch(e) {}
+}
+
+function progress(msg) { const el = document.getElementById('loading-progress'); if (el) el.textContent = msg; }
+
+// ══════════════════════════════════════════
+// GOOGLE / DRIVE
+// ══════════════════════════════════════════
+const GDRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+const GDRIVE_DISC  = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+const GDRIVE_FILE  = 'sw-lego-tracker.json';
+
+function maybeAutoSignIn() {
+  if (!gapiReady || !gisReady) return;
+  // Try saved token first — avoids showing the auth screen at all
+  const saved = loadSavedToken();
+  if (saved) {
+    accessToken = saved;
+    gapi.client.setToken({ access_token: saved });
+    showLoading('LOADING YOUR DATA…');
+    Promise.all([loadFromDrive(), loadFigures()])
+      .then(async () => {
+        await fetchUserAvatar();
+        showApp();
+      })
+      .catch(e => {
+        // Saved token may have expired — clear it and show login
+        clearSavedToken();
+        showAuth();
+      });
+  } else {
+    // Silent token refresh (no popup) — works if already consented before
+    tokenClient.requestAccessToken({ prompt: '' });
+  }
+}
+
+function handleSignIn() {
+  showLoading('SIGNING IN…');
+  if (!gapiReady || !gisReady) { setTimeout(handleSignIn, 400); return; }
+  tokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+function handleSignOut() {
+  clearSavedToken();
+  if (accessToken) google.accounts.oauth2.revoke(accessToken, ()=>{});
+  accessToken = null; driveFileId = null;
+  collection = new Set(); wishlist = [];
+  showAuth();
+}
+
+async function fetchUserAvatar() {
+  try {
+    const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } });
+    const u = await r.json();
+    if (u.picture) { const av = document.getElementById('user-avatar'); av.src = u.picture; av.style.display = 'block'; }
+  } catch(e) {}
+}
+
+async function loadFromDrive() {
+  try {
+    const list = await gapi.client.drive.files.list({ spaces: 'appDataFolder', fields: 'files(id)', q: `name='${GDRIVE_FILE}'` });
+    if (list.result.files.length > 0) {
+      driveFileId = list.result.files[0].id;
+      const res  = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
+      const data = typeof res.result === 'string' ? JSON.parse(res.result) : res.result;
+      collection = new Set(data.collection || []);
+      wishlist   = data.wishlist || [];
+    }
+  } catch(e) { console.warn('Drive load:', e); }
+}
+
+function scheduleSave() {
+  setSyncStatus('saving'); clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveToDrive, 1500);
+}
+
+async function saveToDrive() {
+  const body = JSON.stringify({ collection: [...collection], wishlist });
+  try {
+    if (driveFileId) {
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`,
+        { method: 'PATCH', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }, body });
+    } else {
+      const meta = await gapi.client.drive.files.create({ resource: { name: GDRIVE_FILE, parents: ['appDataFolder'] }, fields: 'id' });
+      driveFileId = meta.result.id;
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`,
+        { method: 'PATCH', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }, body });
+    }
+    setSyncStatus('saved'); setTimeout(() => setSyncStatus('idle'), 3000);
+  } catch(e) { setSyncStatus('error'); }
+}
+
+function setSyncStatus(s) {
+  const bar = document.getElementById('sync-bar'), msg = document.getElementById('sync-msg'),
+        icon = document.getElementById('sync-icon'), dot = bar.querySelector('.sync-dot');
+  bar.className = '';
+  if      (s==='saving') { bar.classList.add('visible','saving'); msg.textContent='Syncing to Google Drive…'; dot.classList.add('pulse'); icon.textContent='🔄'; }
+  else if (s==='saved')  { bar.classList.add('visible','saved');  msg.textContent='Saved ✓'; dot.classList.remove('pulse'); icon.textContent='☁️'; }
+  else if (s==='error')  { bar.classList.add('visible','error');  msg.textContent='Sync failed'; icon.textContent='⚠️'; }
+  else                   { bar.classList.remove('visible'); icon.textContent='☁️'; }
+}
+
+// ══════════════════════════════════════════
+// SCREENS
+// ══════════════════════════════════════════
+function showAuth()     { set('auth-screen','flex'); set('loading-screen','none'); set('main-app','none'); }
+function showLoading(t) { document.getElementById('loading-text').textContent=t; set('loading-screen','flex'); set('auth-screen','none'); set('main-app','none'); }
+function showApp()      { set('main-app','flex'); set('loading-screen','none'); set('auth-screen','none'); buildCatUI(); updateStats(); renderTab('discover'); }
+function set(id,v)      { document.getElementById(id).style.display=v; }
+
+// ══════════════════════════════════════════
+// ACTIONS
+// ══════════════════════════════════════════
+function addToCollection(code) { collection.add(code); wishlist=wishlist.filter(c=>c!==code); scheduleSave(); renderCurrent(); updateStats(); toast('✓ Added to collection'); }
+function removeFromCollection(code) { collection.delete(code); scheduleSave(); renderCurrent(); updateStats(); }
+function addToWishlist(code) { if(!wishlist.includes(code)&&!collection.has(code)){ wishlist.push(code); scheduleSave(); renderCurrent(); updateStats(); toast('⭐ Added to wishlist'); } }
+function removeFromWishlist(code) { wishlist=wishlist.filter(c=>c!==code); scheduleSave(); renderCurrent(); updateStats(); }
+function moveWish(code,dir) { const i=wishlist.indexOf(code); if(i<0)return; const j=i+dir; if(j<0||j>=wishlist.length)return; [wishlist[i],wishlist[j]]=[wishlist[j],wishlist[i]]; scheduleSave(); renderTab('wishlist'); }
+function markOwned(code) { collection.add(code); wishlist=wishlist.filter(c=>c!==code); scheduleSave(); renderCurrent(); updateStats(); toast('✓ Marked as owned!'); }
+
+// ══════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════
+function updateStats() {
+  const left = Math.max(0, FIGURES.length - collection.size - wishlist.length);
+  document.getElementById('stat-owned').textContent    = collection.size;
+  document.getElementById('stat-wish').textContent     = wishlist.length;
+  document.getElementById('tc-discover').textContent   = left;
+  document.getElementById('tc-collection').textContent = collection.size;
+  document.getElementById('tc-wishlist').textContent   = wishlist.length;
+}
+
+// ══════════════════════════════════════════
+// CATEGORY UI
+// ══════════════════════════════════════════
+function allCats() {
+  const present = new Set(FIGURES.map(f=>f.cat));
+  return ['All', ...Object.keys(SHOW_COLORS).filter(c=>present.has(c)), ...[...present].filter(c=>!SHOW_COLORS[c]).sort()];
+}
+
+function buildCatUI() {
+  const cats = allCats();
+  document.getElementById('cat-strip').innerHTML = cats.map(c =>
+    `<div class="cat-chip${activeCat===c?' active':''}" onclick="selectCat(${JSON.stringify(c)})">
+      ${c!=='All'?`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${SHOW_COLORS[c]||'#666'};margin-right:6px;vertical-align:middle"></span>`:''}${c}
+    </div>`).join('');
+  document.getElementById('cat-list').innerHTML = cats.map(c =>
+    `<div class="cat-option${activeCat===c?' active':''}" onclick="selectCat(${JSON.stringify(c)});closeFilter()">
+      <div class="cat-dot" style="background:${c!=='All'?(SHOW_COLORS[c]||'#666'):'transparent'}"></div>
+      <span class="cat-label">${c}</span>
+    </div>`).join('');
+  const btn = document.getElementById('filter-btn');
+  btn.textContent = activeCat==='All' ? '☰ Era' : (activeCat.length>20 ? activeCat.slice(0,18)+'…' : activeCat);
+  btn.classList.toggle('active', activeCat!=='All');
+}
+
+function selectCat(cat) { activeCat=cat; buildCatUI(); renderCurrent(); }
+
+// ══════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════
+function switchTab(tab) {
+  activeTab=tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  const isWish = tab==='wishlist';
+  document.getElementById('toolbar').style.display   = isWish ? 'none' : 'flex';
+  document.getElementById('cat-strip').style.display = isWish ? 'none' : 'flex';
+  renderTab(tab);
+}
+function renderCurrent() { renderTab(activeTab); }
+
+// ── Search wiring ──────────────────────────
+function initSearch() {
+  const input = document.getElementById('search-input');
+  if (!input) return;
+  input.addEventListener('input',  () => renderCurrent());
+  input.addEventListener('keyup',  () => renderCurrent());
+  input.addEventListener('search', () => renderCurrent());
+}
+
+function getQ() { const el=document.getElementById('search-input'); return el?el.value.trim().toLowerCase():''; }
+
+// ══════════════════════════════════════════
+// INFINITE SCROLL
+// ══════════════════════════════════════════
+function setupScrollObserver() {
+  if (scrollObserver) scrollObserver.disconnect();
+  const sentinel = document.getElementById('scroll-sentinel');
+  if (!sentinel) return;
+  scrollObserver = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting && visibleCount < currentFigs.length) {
+      visibleCount += PAGE_SIZE;
+      appendMoreCards();
+    }
+  }, { rootMargin: '200px' });
+  scrollObserver.observe(sentinel);
+}
+
+function appendMoreCards() {
+  const grid = document.getElementById('fig-grid');
+  if (!grid) return;
+  const slice = currentFigs.slice(grid.children.length, visibleCount);
+  const mode  = activeTab === 'collection' ? 'collection' : 'browse';
+  grid.insertAdjacentHTML('beforeend', slice.map(f => figCard(f, mode)).join(''));
+}
+
+// ══════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════
+function renderTab(tab) {
+  const q   = getQ();
+  const el  = document.getElementById('content');
+  const lbl = document.getElementById('section-label');
+  if (scrollObserver) scrollObserver.disconnect();
+
+  if (!figuresLoaded) {
+    lbl.textContent = 'Loading figures from Rebrickable…';
+    el.innerHTML = skeletons(9);
+    return;
+  }
+
+  const matches = f => (f.name.toLowerCase().includes(q) || f.code.includes(q)) && (activeCat==='All' || f.cat===activeCat);
+
+  if (tab === 'discover') {
+    currentFigs  = FIGURES.filter(f => !collection.has(f.code) && !wishlist.includes(f.code) && matches(f));
+    visibleCount = PAGE_SIZE;
+    lbl.textContent = `${currentFigs.length} figures to discover`;
+    if (!currentFigs.length) {
+      el.innerHTML = `<div class="empty"><div class="empty-icon">🌌</div><div class="empty-text">${q||activeCat!=='All'?'No figures match your search.':'All figures are owned or wishlisted!'}</div></div>`;
+      return;
+    }
+    el.innerHTML = `<div class="figure-grid" id="fig-grid"></div><div id="scroll-sentinel" style="height:1px"></div>`;
+    appendMoreCards();
+    setupScrollObserver();
+
+  } else if (tab === 'collection') {
+    currentFigs  = FIGURES.filter(f => collection.has(f.code) && matches(f));
+    visibleCount = PAGE_SIZE;
+    const pct    = FIGURES.length ? ((collection.size/FIGURES.length)*100).toFixed(1) : 0;
+    lbl.textContent = `${collection.size} / ${FIGURES.length} owned · ${pct}% complete`;
+    el.innerHTML =
+      `<div class="progress-wrap"><div class="progress-bg"><div class="progress-fill" style="width:${pct}%"></div></div></div>` +
+      (currentFigs.length
+        ? `<div class="figure-grid" id="fig-grid"></div><div id="scroll-sentinel" style="height:1px"></div>`
+        : `<div class="empty"><div class="empty-icon">📦</div><div class="empty-text">${q?'No figures match.':'Add figures from the Discover tab!'}</div></div>`);
+    if (currentFigs.length) { appendMoreCards(); setupScrollObserver(); }
+
+  } else if (tab === 'wishlist') {
+    const figs = wishlist.map(c=>FIGURES.find(f=>f.code===c)).filter(Boolean);
+    lbl.textContent = `${figs.length} figures · ranked by priority`;
+    el.innerHTML = figs.length
+      ? `<div class="wishlist-list">${figs.map((f,i)=>wishRow(f,i,figs.length)).join('')}</div>`
+      : `<div class="empty"><div class="empty-icon">⭐</div><div class="empty-text">Your wishlist is empty.<br>Tap ⭐ on figures in Discover!</div></div>`;
+  }
+}
+
+// ══════════════════════════════════════════
+// CARD TEMPLATES
+// ══════════════════════════════════════════
+function figCard(f, mode) {
+  const color = SHOW_COLORS[f.cat]||'#666';
+  const src   = f.img || blImg(f.code);
+  const sc    = f.code.replace(/'/g,"\\'");
+  const img   = `<img class="fig-img" src="${src}" alt="" loading="lazy"
+    onerror="if(!this.dataset.b){this.dataset.b=1;this.src='${blImg(f.code)}'}else{this.style.display='none';this.nextElementSibling.style.display='flex'}">
+    <div class="fig-fallback" style="display:none;--cat-color:${color}">${initials(f.name)}</div>`;
+  const acts = mode==='browse'
+    ? `<div class="fig-actions"><button class="fig-btn fig-btn-wish" onclick="addToWishlist('${sc}')">⭐</button><button class="fig-btn fig-btn-own" onclick="addToCollection('${sc}')">✓</button></div>`
+    : `<button class="fig-btn-full" onclick="removeFromCollection('${sc}')">✓ Owned</button>`;
+  return `<div class="figure-card" style="--cat-color:${color}"><div class="fig-img-wrap">${img}</div>
+    <div class="fig-name">${f.name}</div>
+    <a class="fig-code-link" href="${blPage(f.code)}" target="_blank" rel="noopener"><span class="fig-code">${f.code.toUpperCase()}</span> <span>🔗</span></a>
+    ${acts}</div>`;
+}
+
+function wishRow(f, idx, total) {
+  const color = SHOW_COLORS[f.cat]||'#666', rank=idx+1, rc=rank<=3?RANK_COLORS[rank-1]:'#5060a0';
+  const src   = f.img || blImg(f.code);
+  const sc    = f.code.replace(/'/g,"\\'");
+  const img   = `<img class="wish-img" src="${src}" alt="" loading="lazy"
+    onerror="if(!this.dataset.b){this.dataset.b=1;this.src='${blImg(f.code)}'}else{this.style.display='none';this.nextElementSibling.style.display='flex'}">
+    <div class="wish-fallback" style="display:none;--cat-color:${color}">${initials(f.name)}</div>`;
+  return `<div class="wish-row" style="--cat-color:${color}">
+    <div class="wish-rank" style="border-color:${rc};background:${rc}20;color:${rc}">${rank}</div>
+    ${img}
+    <div class="wish-info">
+      <div class="wish-name">${f.name}</div>
+      <div class="wish-meta"><span class="wish-code">${f.code.toUpperCase()}</span><span class="wish-cat"> · ${f.cat}</span></div>
+      <a class="wish-bl" href="${blPage(f.code)}" target="_blank" rel="noopener">View on BrickLink →</a>
+    </div>
+    <div class="wish-controls">
+      <button class="wc-btn wc-own" onclick="markOwned('${sc}')" title="Mark as owned">✓</button>
+      <div class="wc-arrows">
+        <button class="wc-arrow" onclick="moveWish('${sc}',-1)" ${idx===0?'disabled':''}>▲</button>
+        <button class="wc-arrow" onclick="moveWish('${sc}',1)"  ${idx===total-1?'disabled':''}>▼</button>
+      </div>
+      <button class="wc-btn wc-remove" onclick="removeFromWishlist('${sc}')" title="Remove">✕</button>
+    </div></div>`;
+}
+
+function skeletons(n) {
+  const c=`<div class="skeleton-card"><div class="skel" style="width:80px;height:80px;border-radius:8px"></div><div class="skel" style="width:80%;height:14px"></div><div class="skel" style="width:60%;height:12px"></div><div class="skel" style="width:100%;height:32px;border-radius:8px"></div></div>`;
+  return `<div class="skeleton-grid">${Array(n).fill(c).join('')}</div>`;
+}
+
+// ══════════════════════════════════════════
+// MODAL & TOAST
+// ══════════════════════════════════════════
+function openFilter()  { buildCatUI(); document.getElementById('modal').classList.add('open'); }
+function closeFilter() { document.getElementById('modal').classList.remove('open'); }
+
+let _tt;
+function toast(msg) { const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('show'),2000); }
+
+// ══════════════════════════════════════════
+// BOOTSTRAP
+// ══════════════════════════════════════════
+(function boot() {
+  initSearch();
+
+  const s1 = document.createElement('script');
+  s1.src = 'https://apis.google.com/js/api.js';
+  s1.onload = () => gapi.load('client', async () => {
+    await gapi.client.init({ discoveryDocs: [GDRIVE_DISC] });
+    gapiReady = true;
+    maybeAutoSignIn();
+  });
+  document.head.appendChild(s1);
+
+  const s2 = document.createElement('script');
+  s2.src = 'https://accounts.google.com/gsi/client';
+  s2.onload = () => {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: GDRIVE_SCOPE,
+      callback: async (resp) => {
+        if (resp.error) { showAuth(); return; }
+        accessToken = resp.access_token;
+        saveToken(accessToken);                          // ← persist for next visit
+        gapi.client.setToken({ access_token: accessToken });
+        showLoading('LOADING YOUR DATA…');
+        try {
+          await Promise.all([loadFromDrive(), loadFigures()]);
+        } catch(e) {
+          document.getElementById('loading-text').textContent    = '⚠️ Error';
+          document.getElementById('loading-progress').textContent = e.message;
+          document.getElementById('loading-progress').style.color = '#ff6060';
+          return;
+        }
+        await fetchUserAvatar();
+        showApp();
+      }
+    });
+    gisReady = true;
+    maybeAutoSignIn();
+  };
+  document.head.appendChild(s2);
+})();
+</script>
 
 // ── BrickLink helpers ──────────────────────
 const blImg  = c => `https://img.bricklink.com/ItemImage/MN/0/${c}.png`;
@@ -609,7 +1118,7 @@ let tokenClient = null;
 
 const CACHE_KEY = 'sw_figs_v4';
 const CACHE_TS  = 'sw_figs_ts_v4';
-const CACHE_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
+const CACHE_AGE = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 // ── Rebrickable ────────────────────────────
 async function loadFigures() {
@@ -630,23 +1139,38 @@ async function loadFigures() {
   } catch(e) { /* ignore cache errors */ }
 
   progress('Connecting to Rebrickable…');
-  let url = `https://rebrickable.com/api/v3/lego/minifigs/?set_num=sw&page_size=100&ordering=set_num`;
+  // Use page_size=50 to stay well under rate limits; add delay between pages
+  let url = `https://rebrickable.com/api/v3/lego/minifigs/?set_num=sw&page_size=50&ordering=set_num`;
   const seen = new Set();
   const all  = [];
   let page   = 1;
+  const delay = ms => new Promise(r => setTimeout(r, ms));
 
   while (url) {
     progress(`Loading page ${page}… (${all.length} figures so far)`);
-    const res = await fetch(url, {
-      headers: { 'Authorization': `key ${REBRICKABLE_API_KEY}` }
-    });
+
+    let res;
+    // Retry up to 3 times on 429
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      res = await fetch(url, {
+        headers: { 'Authorization': `key ${REBRICKABLE_API_KEY}` }
+      });
+      if (res.status === 429) {
+        const wait = attempt * 2000;
+        progress(`Rate limited — waiting ${wait/1000}s before retry…`);
+        await delay(wait);
+        continue;
+      }
+      break;
+    }
+
     if (res.status === 401) throw new Error('Invalid Rebrickable API key — check your key in index.html');
+    if (res.status === 429) throw new Error('Rebrickable rate limit hit repeatedly. Please wait a minute and reload.');
     if (!res.ok)            throw new Error(`Rebrickable returned HTTP ${res.status}`);
 
     const data = await res.json();
     for (const fig of (data.results || [])) {
       if (!/^sw\d/i.test(fig.set_num)) continue;
-      // Strip variant suffix e.g. sw0001-1 → sw0001
       const code = fig.set_num.toLowerCase().replace(/-\d+$/, '');
       if (seen.has(code)) continue;
       seen.add(code);
@@ -654,6 +1178,8 @@ async function loadFigures() {
     }
     url = data.next || null;
     page++;
+    // Polite delay between pages: 600ms
+    if (url) await delay(600);
   }
 
   if (all.length === 0) throw new Error('No Star Wars figures found — check your Rebrickable API key');
