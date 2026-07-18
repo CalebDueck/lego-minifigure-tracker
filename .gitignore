@@ -1,0 +1,6 @@
+.cache/
+.firebase/
+firebase-debug.log
+__pycache__/
+*.pyc
+*** End Patch

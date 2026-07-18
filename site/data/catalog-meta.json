@@ -1,0 +1,10 @@
+{
+  "generatedAt": "2026-07-17T05:21:47.876658+00:00",
+  "figureCount": 1536,
+  "setCount": 861,
+  "source": "Rebrickable bulk downloads",
+  "notes": [
+    "bricklinkNumber is override-driven and may be null until enriched.",
+    "sortFallback uses first Star Wars appearance order."
+  ]
+}
