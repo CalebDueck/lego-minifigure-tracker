@@ -5,18 +5,23 @@ import datetime
 import gzip
 import io
 import json
+import os
 import re
 import unicodedata
+import urllib.parse
 import urllib.request
 from collections import defaultdict
 from pathlib import Path
 
 
 BASE_URL = "https://cdn.rebrickable.com/media/downloads/"
+BRICKSET_API_URL = "https://brickset.com/api/v3.asmx/getSets"
 ROOT = Path(__file__).resolve().parent.parent
 CACHE_DIR = ROOT / ".cache" / "rebrickable"
+BRICKSET_CACHE_PATH = ROOT / ".cache" / "brickset" / "star-wars-sets.json"
 OUTPUT_DIR = ROOT / "site" / "data"
 OVERRIDES_PATH = ROOT / "catalog" / "overrides.json"
+GENERATED_BRICKLINK_PATH = ROOT / "catalog" / "bricklink.generated.json"
 
 FILES = {
     "themes": "themes.csv.gz",
@@ -28,11 +33,15 @@ FILES = {
 }
 
 SERIES_ORDER = [
+    "Young Jedi Adventures",
     "Episode I - The Phantom Menace",
     "Episode II - Attack of the Clones",
     "Episode III - Revenge of the Sith",
     "The Clone Wars",
+    "The Bad Batch",
     "Rebels",
+    "Obi-Wan Kenobi",
+    "Andor",
     "Rogue One",
     "Solo",
     "Episode IV - A New Hope",
@@ -40,16 +49,63 @@ SERIES_ORDER = [
     "Episode VI - Return of the Jedi",
     "The Mandalorian",
     "The Book of Boba Fett",
-    "Obi-Wan Kenobi",
-    "Andor",
     "Ahsoka",
+    "Skeleton Crew",
+    "The Mandalorian and Grogu",
     "The Acolyte",
+    "Resistance",
     "Episode VII - The Force Awakens",
     "Episode VIII - The Last Jedi",
     "Episode IX - The Rise of Skywalker",
+    "Battlefront",
+    "Jedi: Fallen Order",
+    "The Force Unleashed",
+    "The Old Republic",
+    "The Freemaker Adventures",
+    "The Yoda Chronicles",
+    "Legends",
+    "Galaxy's Edge",
+    "Rebuild the Galaxy",
     "Holiday / Special",
     "Expanded Universe / Other",
 ]
+
+BRICKSET_SUBTHEME_TO_SERIES = {
+    "Ahsoka": "Ahsoka",
+    "Andor": "Andor",
+    "Battlefront": "Battlefront",
+    "Episode I": "Episode I - The Phantom Menace",
+    "Episode II": "Episode II - Attack of the Clones",
+    "Episode III": "Episode III - Revenge of the Sith",
+    "Episode IV": "Episode IV - A New Hope",
+    "Episode IX": "Episode IX - The Rise of Skywalker",
+    "Episode V": "Episode V - The Empire Strikes Back",
+    "Episode VI": "Episode VI - Return of the Jedi",
+    "Episode VII": "Episode VII - The Force Awakens",
+    "Episode VIII": "Episode VIII - The Last Jedi",
+    "Galaxy's Edge": "Galaxy's Edge",
+    "Jedi: Fallen Order": "Jedi: Fallen Order",
+    "Legends": "Legends",
+    "Obi-Wan Kenobi": "Obi-Wan Kenobi",
+    "Rebels": "Rebels",
+    "Rebuild the Galaxy": "Rebuild the Galaxy",
+    "Resistance": "Resistance",
+    "Rogue One": "Rogue One",
+    "Seasonal": "Holiday / Special",
+    "Skeleton Crew": "Skeleton Crew",
+    "Solo": "Solo",
+    "The Acolyte": "The Acolyte",
+    "The Bad Batch": "The Bad Batch",
+    "The Book of Boba Fett": "The Book of Boba Fett",
+    "The Clone Wars": "The Clone Wars",
+    "The Force Unleashed": "The Force Unleashed",
+    "The Freemaker Adventures": "The Freemaker Adventures",
+    "The Mandalorian": "The Mandalorian",
+    "The Mandalorian and Grogu": "The Mandalorian and Grogu",
+    "The Old Republic": "The Old Republic",
+    "The Yoda Chronicles": "The Yoda Chronicles",
+    "Young Jedi Adventures": "Young Jedi Adventures",
+}
 
 SERIES_RULES = [
     (
@@ -98,7 +154,7 @@ SERIES_RULES = [
     (
         "Obi-Wan Kenobi",
         re.compile(
-            r"reva|third sister|fifth brother|tala durith|kenobi series|inquisitor transport scythe|obi-wan's jedi starfighter.*2022",
+            r"\breva\b|\bthird sister\b|\bfifth brother\b|\btala durith\b|kenobi series|inquisitor transport scythe|obi-wan's jedi starfighter.*2022",
             re.I,
         ),
     ),
@@ -112,7 +168,10 @@ SERIES_RULES = [
     ),
     (
         "The Acolyte",
-        re.compile(r"the acolyte|mae aniseya|osha aniseya|qimir|sol", re.I),
+        re.compile(
+            r"\bthe acolyte\b|\bmae aniseya\b|\bosha aniseya\b|\bqimir\b|\bmaster sol\b|\bsol\b",
+            re.I,
+        ),
     ),
     (
         "Episode I - The Phantom Menace",
@@ -214,9 +273,116 @@ def load_csv(name):
 
 
 def load_overrides():
-    if not OVERRIDES_PATH.exists():
-        return {"figures": {}}
-    return json.loads(OVERRIDES_PATH.read_text())
+    generated = {"figures": {}}
+    manual = {"figures": {}}
+
+    if GENERATED_BRICKLINK_PATH.exists():
+        generated = json.loads(GENERATED_BRICKLINK_PATH.read_text())
+
+    if OVERRIDES_PATH.exists():
+        manual = json.loads(OVERRIDES_PATH.read_text())
+
+    merged = dict(generated.get("figures", {}))
+    merged.update(manual.get("figures", {}))
+    return {"figures": merged}
+
+
+def load_brickset_cache():
+    if not BRICKSET_CACHE_PATH.exists():
+        return None
+    return json.loads(BRICKSET_CACHE_PATH.read_text())
+
+
+def write_brickset_cache(payload):
+    BRICKSET_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    BRICKSET_CACHE_PATH.write_text(json.dumps(payload, indent=2))
+
+
+def fetch_brickset_star_wars_sets(api_key):
+    page_number = 1
+    page_size = 500
+    matches = None
+    collected = {}
+
+    while matches is None or len(collected) < matches:
+        params = f"{{'theme':'Star Wars','pageSize':'{page_size}','pageNumber':'{page_number}'}}"
+        payload = {
+            "apiKey": api_key,
+            "userHash": "",
+            "params": params,
+        }
+        url = BRICKSET_API_URL + "?" + urllib.parse.urlencode(payload)
+        request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(request) as response:
+            data = json.load(response)
+
+        if data.get("status") != "success":
+            raise RuntimeError(f"Brickset getSets failed: {data.get('message', 'unknown error')}")
+
+        matches = int(data.get("matches") or 0)
+        set_rows = data.get("sets") or []
+        if not set_rows:
+            break
+
+        for row in set_rows:
+            set_num = f"{row['number']}-{row['numberVariant']}"
+            collected[set_num] = {
+                "set_num": set_num,
+                "name": row.get("name", ""),
+                "year": row.get("year"),
+                "subtheme": row.get("subtheme") or "",
+                "bricksetUrl": row.get("bricksetURL") or "",
+            }
+
+        page_number += 1
+
+    return {
+        "generatedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "source": "Brickset API v3",
+        "matches": matches or len(collected),
+        "sets": collected,
+    }
+
+
+def load_brickset_sets():
+    api_key = os.getenv("BRICKSET_API_KEY", "").strip()
+    cached = load_brickset_cache()
+
+    if api_key:
+        try:
+            payload = fetch_brickset_star_wars_sets(api_key)
+            write_brickset_cache(payload)
+            return payload["sets"], {
+                "enabled": True,
+                "source": "Brickset API v3",
+                "fetchedAt": payload["generatedAt"],
+            }
+        except Exception as error:
+            if cached:
+                return cached.get("sets", {}), {
+                    "enabled": True,
+                    "source": "Brickset cache",
+                    "fetchedAt": cached.get("generatedAt"),
+                    "warning": str(error),
+                }
+            print(f"Warning: Brickset enrichment failed ({error}); falling back to legacy series inference.")
+            return {}, {
+                "enabled": False,
+                "source": "unavailable",
+                "warning": str(error),
+            }
+
+    if cached:
+        return cached.get("sets", {}), {
+            "enabled": True,
+            "source": "Brickset cache",
+            "fetchedAt": cached.get("generatedAt"),
+        }
+
+    return {}, {
+        "enabled": False,
+        "source": "disabled",
+    }
 
 
 def build_theme_chain(theme_id, themes_by_id):
@@ -264,11 +430,26 @@ def extract_variant(name):
     return parts[1].strip() if len(parts) > 1 else ""
 
 
+def normalize_brickset_series(subtheme):
+    return BRICKSET_SUBTHEME_TO_SERIES.get(subtheme or "")
+
+
 def guess_series(name, appearance_sets, override=None):
     if override:
         return override
 
-    haystack = " ".join([name, *[item["name"] for item in appearance_sets], *[item["theme_path"] for item in appearance_sets]])
+    for appearance in appearance_sets:
+        if appearance.get("seriesCandidate"):
+            return appearance["seriesCandidate"]
+
+    haystack = " ".join(
+        [
+            name,
+            *[item["name"] for item in appearance_sets],
+            *[item["theme_path"] for item in appearance_sets],
+            *[item.get("bricksetSubtheme", "") for item in appearance_sets],
+        ]
+    )
     for label, pattern in SERIES_RULES:
         if pattern.search(haystack):
             return label
@@ -300,6 +481,7 @@ def source_kind(theme_path):
 def main():
     overrides = load_overrides()
     figures_override = overrides.get("figures", {})
+    brickset_sets, brickset_meta = load_brickset_sets()
 
     themes = load_csv("themes")
     sets = load_csv("sets")
@@ -355,6 +537,7 @@ def main():
         if not excluded and (has_star_wars_theme or is_star_wars_book):
             figures_here = resolve_figures_for_set(set_row["set_num"])
             if figures_here:
+                brickset_row = brickset_sets.get(set_row["set_num"], {})
                 candidate_sets.append(
                     {
                         "set_num": set_row["set_num"],
@@ -362,6 +545,8 @@ def main():
                         "year": int(set_row["year"] or 0),
                         "theme_path": theme_path_str,
                         "source_kind": source_kind(theme_path_str),
+                        "brickset_subtheme": brickset_row.get("subtheme", ""),
+                        "series_candidate": normalize_brickset_series(brickset_row.get("subtheme", "")),
                         "figure_ids": figures_here,
                     }
                 )
@@ -374,6 +559,8 @@ def main():
             "year": set_row["year"],
             "theme_path": set_row["theme_path"],
             "source_kind": set_row["source_kind"],
+            "bricksetSubtheme": set_row["brickset_subtheme"],
+            "seriesCandidate": set_row["series_candidate"],
         }
         for fig_num in set_row["figure_ids"]:
             figure_appearances[fig_num].append(appearance)
@@ -430,6 +617,8 @@ def main():
     for index, item in enumerate(catalog, start=1):
         item["catalogOrder"] = index
 
+    bricklink_mapped_count = sum(1 for item in catalog if item.get("bricklinkNumber"))
+
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUTPUT_DIR / "catalog.json").write_text(json.dumps(catalog, indent=2))
     (OUTPUT_DIR / "catalog-meta.json").write_text(
@@ -438,10 +627,16 @@ def main():
                 "generatedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 "figureCount": len(catalog),
                 "setCount": len(candidate_sets),
-                "source": "Rebrickable bulk downloads",
+                "bricklinkMappedCount": bricklink_mapped_count,
+                "bricklinkCoveragePercent": round((bricklink_mapped_count / len(catalog)) * 100, 1) if catalog else 0,
+                "source": "Rebrickable bulk downloads + Brickset subtheme enrichment"
+                if brickset_meta.get("enabled")
+                else "Rebrickable bulk downloads",
+                "bricksetSeries": brickset_meta,
                 "notes": [
-                    "bricklinkNumber is override-driven and may be null until enriched.",
+                    "bricklinkNumber merges generated Brickset-based matches with any manual overrides.",
                     "sortFallback uses first Star Wars appearance order.",
+                    "movieSeries prefers Brickset subtheme mappings and falls back to legacy inference only when needed.",
                 ],
             },
             indent=2,

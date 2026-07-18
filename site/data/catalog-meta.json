@@ -1,10 +1,18 @@
 {
-  "generatedAt": "2026-07-17T05:21:47.876658+00:00",
+  "generatedAt": "2026-07-18T20:48:23.216261+00:00",
   "figureCount": 1536,
   "setCount": 861,
-  "source": "Rebrickable bulk downloads",
+  "bricklinkMappedCount": 968,
+  "bricklinkCoveragePercent": 63.0,
+  "source": "Rebrickable bulk downloads + Brickset subtheme enrichment",
+  "bricksetSeries": {
+    "enabled": true,
+    "source": "Brickset cache",
+    "fetchedAt": "2026-07-18T15:59:57.844411+00:00"
+  },
   "notes": [
-    "bricklinkNumber is override-driven and may be null until enriched.",
-    "sortFallback uses first Star Wars appearance order."
+    "bricklinkNumber merges generated Brickset-based matches with any manual overrides.",
+    "sortFallback uses first Star Wars appearance order.",
+    "movieSeries prefers Brickset subtheme mappings and falls back to legacy inference only when needed."
   ]
 }

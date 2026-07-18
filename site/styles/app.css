@@ -268,8 +268,12 @@ a {
   display: grid;
   gap: 1rem;
   margin-top: 1rem;
-  grid-template-columns: 320px minmax(0, 1fr) 430px;
+  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr) minmax(340px, 430px);
   align-items: start;
+}
+
+.workspace.workspace-detail-hidden {
+  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
 }
 
 .left-rail,
@@ -281,6 +285,10 @@ a {
 .left-rail,
 .detail-panel {
   padding: 1.25rem;
+}
+
+.detail-panel.is-hidden {
+  display: none;
 }
 
 .rail-block + .rail-block,
@@ -508,6 +516,12 @@ a {
   color: var(--gold);
 }
 
+.display-mode-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  transform: none;
+}
+
 .figure-grid {
   display: grid;
   gap: 1rem;
@@ -635,8 +649,9 @@ a {
 
 .holotable-grid {
   display: grid;
-  gap: 1.1rem 0.95rem;
-  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  gap: 1rem 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+  align-items: start;
 }
 
 .figure-token {
@@ -655,7 +670,7 @@ a {
 
 .figure-token-ring {
   position: relative;
-  width: min(100%, 110px);
+  width: 100%;
   aspect-ratio: 1;
   margin: 0 auto;
   border-radius: 50%;
@@ -718,11 +733,13 @@ a {
 
 .figure-token-image {
   position: absolute;
-  inset: -8% -18% auto;
-  width: 136%;
-  height: 136%;
-  object-fit: cover;
-  object-position: center 12%;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center top;
+  transform: translateY(6%) scale(2.45);
+  transform-origin: center top;
   filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.5));
   z-index: 2;
 }
@@ -766,6 +783,9 @@ a {
 
 .figure-token-name {
   margin-top: 0.75rem;
+  max-width: 12ch;
+  margin-left: auto;
+  margin-right: auto;
   font-size: 0.9rem;
   font-weight: 700;
   line-height: 1.25;
@@ -773,9 +793,18 @@ a {
 
 .figure-token-series {
   margin-top: 0.28rem;
+  max-width: 14ch;
+  margin-left: auto;
+  margin-right: auto;
   color: var(--muted);
   font-size: 0.74rem;
   line-height: 1.35;
+}
+
+.detail-panel-topbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
 }
 
 .detail-head {
@@ -890,7 +919,7 @@ a {
 
 @media (max-width: 1280px) {
   .workspace {
-    grid-template-columns: 300px minmax(0, 1fr);
+    grid-template-columns: minmax(280px, 300px) minmax(0, 1fr);
   }
 
   .detail-panel {
@@ -946,7 +975,7 @@ a {
   }
 
   .holotable-grid {
-    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(78px, 1fr));
     gap: 0.95rem 0.7rem;
   }
 

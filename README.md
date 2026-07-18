@@ -3,6 +3,7 @@
 Private LEGO Star Wars minifigure tracker with:
 
 - a full local catalog built from Rebrickable bulk downloads
+- Brickset-backed set subtheme enrichment for cleaner movie and series labels
 - collection logging with quantity, condition, acquisition source, and upgrade notes
 - a ranked wishlist
 - sorting by release fallback, character, and movie or series
@@ -13,7 +14,9 @@ Private LEGO Star Wars minifigure tracker with:
 - App entry: [site/index.html](site/index.html)
 - Firebase config to fill: [site/src/firebase-config.js](site/src/firebase-config.js)
 - Catalog builder: [scripts/build_catalog.py](scripts/build_catalog.py)
+- BrickLink enrichment: [scripts/enrich_bricklink_numbers.py](scripts/enrich_bricklink_numbers.py)
 - Catalog overrides: [catalog/overrides.json](catalog/overrides.json)
+- Generated BrickLink map: [catalog/bricklink.generated.json](catalog/bricklink.generated.json)
 - Test checklist: [TESTING.md](TESTING.md)
 
 ## Local run
@@ -80,10 +83,18 @@ If you host on GitHub Pages, add `calebdueck.github.io` to Firebase `Authenticat
 
 ## Catalog rebuild
 
-Rebuild the catalog whenever you want fresher source data:
+Generate BrickLink minifig number mappings from Brickset pages:
 
 ```bash
-python3 scripts/build_catalog.py
+python3 scripts/enrich_bricklink_numbers.py
+```
+
+`--delay` now acts as the minimum starting delay, and the script will raise or lower its own pacing based on Brickset throttling responses.
+
+Then rebuild the catalog:
+
+```bash
+BRICKSET_API_KEY=your_brickset_key python3 scripts/build_catalog.py
 ```
 
 This writes:
@@ -91,7 +102,11 @@ This writes:
 - [catalog.json](site/data/catalog.json)
 - [catalog-meta.json](site/data/catalog-meta.json)
 
+If `BRICKSET_API_KEY` is omitted, the builder will use the cached Brickset set map if one exists, otherwise it falls back to the legacy name-based series inference.
+
 ## Notes
 
 - The catalog currently uses Rebrickable bulk data as the canonical source.
-- `bricklinkNumber` is override-driven. Until that mapping is enriched, the app falls back to first Star Wars appearance order for the `BrickLink / release order` sort.
+- `movieSeries` now prefers Brickset Star Wars set subthemes and falls back only for unmapped promo or edge-case items.
+- `bricklinkNumber` now merges manual overrides with the generated Brickset-based enrichment file.
+- Brickset throttles aggressive first-time runs, so the enrichment script caches each fetched page under `.cache/brickset/`, adapts its own delay after `429` responses, and is designed to be rerun incrementally.

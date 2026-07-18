@@ -52,7 +52,7 @@ export function renderShellMarkup(seriesOptions) {
 
       <div id="mode-bar" class="mode-bar"></div>
 
-      <main class="workspace">
+      <main id="workspace" class="workspace">
         <aside class="left-rail panel">
           <section class="rail-block">
             <div class="rail-title">Views</div>
@@ -206,18 +206,24 @@ export function renderLeftStats(stats) {
 }
 
 export function renderCatalogMeta(meta) {
+  const mappedCount = Number(meta.bricklinkMappedCount || 0);
+  const coverage = Number(meta.bricklinkCoveragePercent || 0);
+
   return `
     <div class="rail-title">Catalog Feed</div>
     <ul class="meta-list">
       <li>${escapeHtml(meta.figureCount || 0)} figures indexed</li>
       <li>${escapeHtml(meta.setCount || 0)} Star Wars sets scanned</li>
       <li>Source: ${escapeHtml(meta.source || "Rebrickable bulk data")}</li>
-      <li>BrickLink numbers can be added later through catalog overrides.</li>
+      <li>${escapeHtml(mappedCount)} BrickLink IDs linked (${escapeHtml(coverage)}% coverage)</li>
     </ul>
   `;
 }
 
-export function renderDisplayModeControls(displayMode) {
+export function renderDisplayModeControls(displayMode, detailPanelOpen, hasSelectedFigure) {
+  const detailLabel = detailPanelOpen ? "Hide details" : "Show details";
+  const detailDisabled = hasSelectedFigure ? "" : "disabled";
+
   return `
     <div class="display-mode-shell" role="group" aria-label="Display mode">
       <span class="display-mode-label">Display mode</span>
@@ -234,6 +240,13 @@ export function renderDisplayModeControls(displayMode) {
         data-display-mode="holotable"
       >
         TCS head wall
+      </button>
+      <button
+        class="display-mode-button display-mode-button-detail${detailPanelOpen ? " is-active" : ""}"
+        data-action="toggle-detail-panel"
+        ${detailDisabled}
+      >
+        ${detailLabel}
       </button>
     </div>
   `;
@@ -401,6 +414,9 @@ export function renderDetailPanel(figure, record, session, wishlistCount) {
     .join("");
 
   return `
+    <div class="detail-panel-topbar">
+      <button class="ghost-button compact" data-action="toggle-detail-panel" type="button">Dismiss panel</button>
+    </div>
     <div class="detail-head">
       <div class="detail-portrait">
         <img src="${escapeHtml(figure.imageUrl)}" alt="${escapeHtml(figure.name)}">

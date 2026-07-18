@@ -27,6 +27,7 @@ class HolocronApp {
     this.seriesOptions = [];
     this.records = {};
     this.selectedId = null;
+    this.detailPanelOpen = true;
     this.filters = {
       search: "",
       series: "all",
@@ -90,6 +91,7 @@ class HolocronApp {
     this.root.classList.remove("app-boot");
     this.root.innerHTML = renderShellMarkup(this.seriesOptions);
     this.refs = {
+      workspace: document.getElementById("workspace"),
       headerStats: document.getElementById("header-stats"),
       modeBar: document.getElementById("mode-bar"),
       leftStats: document.getElementById("left-stats"),
@@ -173,6 +175,12 @@ class HolocronApp {
       return;
     }
 
+    if (action === "toggle-detail-panel") {
+      this.detailPanelOpen = !this.detailPanelOpen;
+      this.render();
+      return;
+    }
+
     if (action === "clear-filters") {
       this.filters = { search: "", series: "all", sort: "bricklink" };
       this.refs.searchInput.value = "";
@@ -188,6 +196,7 @@ class HolocronApp {
 
     if (action === "select-figure") {
       this.selectedId = id;
+      this.detailPanelOpen = true;
       this.render();
       return;
     }
@@ -381,11 +390,13 @@ class HolocronApp {
     this.refs.modeBar.innerHTML = renderModeBar(this.session, this.saveState, this.lastSavedLabel, CONFIG_PATH);
     this.refs.leftStats.innerHTML = renderLeftStats(stats);
     this.refs.catalogMeta.innerHTML = renderCatalogMeta(this.catalogMeta);
-    this.refs.displayControls.innerHTML = renderDisplayModeControls(this.displayMode);
+    this.refs.displayControls.innerHTML = renderDisplayModeControls(this.displayMode, this.detailPanelOpen, Boolean(selectedFigure));
     this.refs.resultHeading.textContent = renderResultHeading(this.view, visibleFigures.length);
     this.refs.resultSubheading.textContent = renderResultSubheading(this.filters, this.view, this.displayMode);
     this.refs.figureGrid.innerHTML = renderFigureGrid(visibleFigures, this.records, selectedFigure?.id || null, this.displayMode);
     this.refs.detailPanel.innerHTML = renderDetailPanel(selectedFigure, selectedRecord, this.session, stats.wishlistCount);
+    this.refs.workspace.classList.toggle("workspace-detail-hidden", !this.detailPanelOpen);
+    this.refs.detailPanel.classList.toggle("is-hidden", !this.detailPanelOpen);
 
     this.refs.countRoster.textContent = String(this.catalog.length);
     this.refs.countCollection.textContent = String(stats.ownedCount);
