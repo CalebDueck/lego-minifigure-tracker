@@ -370,7 +370,7 @@ function renderHolotableToken(figure, record, selected) {
           ${wishlisted ? `<span class="figure-token-rank">#${record.wishlistRank}</span>` : ""}
         </div>
         <div class="figure-token-name">${escapeHtml(figure.character)}</div>
-        <div class="figure-token-series">${escapeHtml(figure.movieSeries)}</div>
+        <div class="figure-token-year">${escapeHtml(figure.releaseYear)}</div>
       </button>
     </article>
   `;

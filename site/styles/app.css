@@ -117,6 +117,9 @@ a {
   z-index: 1;
   width: min(1600px, calc(100% - 32px));
   margin: 24px auto 40px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .panel {
@@ -270,6 +273,7 @@ a {
   margin-top: 1rem;
   grid-template-columns: minmax(280px, 320px) minmax(0, 1fr) minmax(340px, 430px);
   align-items: start;
+  min-height: 0;
 }
 
 .workspace.workspace-detail-hidden {
@@ -528,6 +532,10 @@ a {
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
 }
 
+.figure-grid.figure-grid-holotable {
+  display: block;
+}
+
 .figure-card {
   position: relative;
   display: flex;
@@ -542,8 +550,15 @@ a {
 }
 
 .figure-card.is-selected {
-  border-color: rgba(255, 222, 112, 0.42);
-  box-shadow: 0 0 0 1px rgba(255, 222, 112, 0.18), 0 18px 44px rgba(0, 0, 0, 0.32);
+  border-color: rgba(255, 222, 112, 0.9);
+  box-shadow:
+    0 0 0 2px rgba(255, 222, 112, 0.5),
+    0 18px 44px rgba(0, 0, 0, 0.32);
+}
+
+.figure-card.is-selected .figure-character,
+.figure-card.is-selected .figure-order {
+  color: var(--gold);
 }
 
 .figure-select {
@@ -650,7 +665,7 @@ a {
 .holotable-grid {
   display: grid;
   gap: 1rem 0.8rem;
-  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
   align-items: start;
 }
 
@@ -694,7 +709,8 @@ a {
     radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.1), transparent 62%),
     linear-gradient(135deg, rgba(255, 222, 112, 0.45), rgba(124, 48, 255, 0.18));
   box-shadow:
-    inset 0 0 0 1px rgba(255, 222, 112, 0.34),
+    inset 0 0 0 2px rgba(255, 222, 112, 0.55),
+    0 0 0 2px rgba(255, 222, 112, 0.46),
     0 14px 34px rgba(0, 0, 0, 0.4);
 }
 
@@ -738,7 +754,7 @@ a {
   height: 100%;
   object-fit: contain;
   object-position: center top;
-  transform: translateY(6%) scale(2.45);
+  transform: translateY(-3%) scale(2.52);
   transform-origin: center top;
   filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.5));
   z-index: 2;
@@ -791,7 +807,7 @@ a {
   line-height: 1.25;
 }
 
-.figure-token-series {
+.figure-token-year {
   margin-top: 0.28rem;
   max-width: 14ch;
   margin-left: auto;
@@ -799,6 +815,11 @@ a {
   color: var(--muted);
   font-size: 0.74rem;
   line-height: 1.35;
+}
+
+.figure-token.is-selected .figure-token-name,
+.figure-token.is-selected .figure-token-year {
+  color: var(--gold);
 }
 
 .detail-panel-topbar {
@@ -927,10 +948,32 @@ a {
   }
 }
 
+@media (min-width: 981px) {
+  .shell {
+    height: calc(100dvh - 64px);
+  }
+
+  .workspace {
+    flex: 1;
+    align-items: stretch;
+  }
+
+  .left-rail,
+  .roster-stage,
+  .detail-panel {
+    height: 100%;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+}
+
 @media (max-width: 980px) {
   .shell {
     width: min(100% - 20px, 1600px);
     margin-top: 12px;
+    display: block;
   }
 
   .command-deck,
@@ -975,7 +1018,7 @@ a {
   }
 
   .holotable-grid {
-    grid-template-columns: repeat(auto-fit, minmax(78px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(74px, 1fr));
     gap: 0.95rem 0.7rem;
   }
 

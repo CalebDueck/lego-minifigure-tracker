@@ -394,6 +394,7 @@ class HolocronApp {
     this.refs.resultHeading.textContent = renderResultHeading(this.view, visibleFigures.length);
     this.refs.resultSubheading.textContent = renderResultSubheading(this.filters, this.view, this.displayMode);
     this.refs.figureGrid.innerHTML = renderFigureGrid(visibleFigures, this.records, selectedFigure?.id || null, this.displayMode);
+    this.refs.figureGrid.classList.toggle("figure-grid-holotable", this.displayMode === "holotable");
     this.refs.detailPanel.innerHTML = renderDetailPanel(selectedFigure, selectedRecord, this.session, stats.wishlistCount);
     this.refs.workspace.classList.toggle("workspace-detail-hidden", !this.detailPanelOpen);
     this.refs.detailPanel.classList.toggle("is-hidden", !this.detailPanelOpen);
