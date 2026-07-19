@@ -111,7 +111,8 @@ export function renderShellMarkup(seriesOptions) {
 
         <section class="roster-stage panel">
           <div class="stage-top">
-            <div>
+            <div class="stage-copy">
+              <div id="result-nav" class="stage-nav"></div>
               <div id="result-heading" class="stage-heading">Roster loading...</div>
               <div id="result-subheading" class="stage-subheading"></div>
             </div>
@@ -237,7 +238,20 @@ export function renderCatalogMeta(meta) {
   `;
 }
 
-export function renderDisplayModeControls(figureDisplayMode, showingCharacterDirectory, detailPanelOpen, hasSelectedFigure, hasCharacterFocus) {
+export function renderStageNav(characterFocus) {
+  if (!characterFocus) {
+    return "";
+  }
+
+  return `
+    <button class="ghost-button compact stage-back-button" data-action="open-character-directory" type="button">
+      <span class="stage-back-glyph" aria-hidden="true">&lt;</span>
+      <span>Back to Unique Characters</span>
+    </button>
+  `;
+}
+
+export function renderDisplayModeControls(figureDisplayMode, showingCharacterDirectory, detailPanelOpen, hasSelectedFigure) {
   const detailLabel = detailPanelOpen ? "Hide details" : "Show details";
   const detailDisabled = hasSelectedFigure ? "" : "disabled";
 
@@ -258,13 +272,6 @@ export function renderDisplayModeControls(figureDisplayMode, showingCharacterDir
       >
         TCS head wall
       </button>
-      ${hasCharacterFocus
-        ? `
-          <button class="display-mode-button" data-action="open-character-directory">
-            Back to Unique Characters
-          </button>
-        `
-        : ""}
       <button
         class="display-mode-button display-mode-button-detail${detailPanelOpen ? " is-active" : ""}"
         data-action="toggle-detail-panel"

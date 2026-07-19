@@ -7,6 +7,7 @@ import {
   renderModeBar,
   renderLeftStats,
   renderCatalogMeta,
+  renderStageNav,
   renderDisplayModeControls,
   renderResultHeading,
   renderResultSubheading,
@@ -100,6 +101,7 @@ class HolocronApp {
       modeBar: document.getElementById("mode-bar"),
       leftStats: document.getElementById("left-stats"),
       catalogMeta: document.getElementById("catalog-meta"),
+      resultNav: document.getElementById("result-nav"),
       resultHeading: document.getElementById("result-heading"),
       resultSubheading: document.getElementById("result-subheading"),
       displayControls: document.getElementById("display-controls"),
@@ -173,6 +175,8 @@ class HolocronApp {
     if (action === "set-view") {
       this.view = actionTarget.dataset.view || "all";
       this.characterFocus = null;
+      this.selectedId = null;
+      this.detailPanelOpen = false;
       this.render();
       return;
     }
@@ -188,7 +192,8 @@ class HolocronApp {
     if (action === "open-character-directory") {
       this.view = "characters";
       this.characterFocus = null;
-      this.detailPanelOpen = true;
+      this.selectedId = null;
+      this.detailPanelOpen = false;
       this.render();
       return;
     }
@@ -211,7 +216,7 @@ class HolocronApp {
     if (action === "select-character") {
       this.characterFocus = actionTarget.dataset.character || null;
       this.selectedId = null;
-      this.detailPanelOpen = true;
+      this.detailPanelOpen = false;
       this.render();
       return;
     }
@@ -417,23 +422,21 @@ class HolocronApp {
     const visibleFigureIds = new Set(visibleFigures.map((figure) => figure.id));
     const selectedFigure = !showingCharacterDirectory && visibleFigureIds.has(this.selectedId)
       ? this.catalogById.get(this.selectedId)
-      : !showingCharacterDirectory
-        ? visibleFigures[0] || null
-        : null;
+      : null;
     const selectedRecord = selectedFigure ? this.records[selectedFigure.id] : null;
     const authOverlay = renderAuthOverlay(this.session);
+    const detailPanelVisible = this.detailPanelOpen && Boolean(selectedFigure);
 
     this.refs.headerStats.innerHTML = renderHeaderStats(stats, this.view);
     this.refs.modeBar.innerHTML = renderModeBar(this.session, this.saveState, this.lastSavedLabel, CONFIG_PATH);
     this.refs.leftStats.innerHTML = renderLeftStats(stats);
     this.refs.catalogMeta.innerHTML = renderCatalogMeta(this.catalogMeta);
-    const hasDetailContent = showingCharacterDirectory || Boolean(selectedFigure) || Boolean(this.characterFocus);
+    this.refs.resultNav.innerHTML = renderStageNav(this.characterFocus);
     this.refs.displayControls.innerHTML = renderDisplayModeControls(
       this.figureDisplayMode,
       showingCharacterDirectory,
-      this.detailPanelOpen,
-      hasDetailContent,
-      Boolean(this.characterFocus),
+      detailPanelVisible,
+      Boolean(selectedFigure),
     );
     this.refs.resultHeading.textContent = renderResultHeading(
       this.view,
@@ -459,11 +462,13 @@ class HolocronApp {
       this.refs.figureGrid.classList.toggle("figure-grid-holotable", this.figureDisplayMode === "holotable");
       this.refs.detailPanel.innerHTML = selectedFigure
         ? renderDetailPanel(selectedFigure, selectedRecord, this.session, stats.wishlistCount)
-        : renderCharacterFocusEmptyPanel(this.characterFocus);
+        : this.characterFocus
+          ? renderCharacterFocusEmptyPanel(this.characterFocus)
+          : renderDetailPanel(null, null, this.session, stats.wishlistCount);
     }
 
-    this.refs.workspace.classList.toggle("workspace-detail-hidden", !this.detailPanelOpen);
-    this.refs.detailPanel.classList.toggle("is-hidden", !this.detailPanelOpen);
+    this.refs.workspace.classList.toggle("workspace-detail-hidden", !detailPanelVisible);
+    this.refs.detailPanel.classList.toggle("is-hidden", !detailPanelVisible);
 
     this.refs.countAll.textContent = String(this.catalog.length);
     this.refs.countOwned.textContent = String(stats.ownedCount);

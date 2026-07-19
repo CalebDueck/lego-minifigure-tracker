@@ -178,6 +178,59 @@ function normalizeCharacterArchiveLabel(character) {
     .trim() || "Unknown Character";
 }
 
+const SPECIAL_ARCHIVE_LABELS = new Set([
+  "Battle Droids",
+  "Astromechs",
+  "Protocol Droids",
+  "Other Droids",
+  "Commanders",
+  "Admirals",
+  "Clone Trooper - Phase 1",
+  "Clone Trooper - Phase 2",
+]);
+
+function isArchivePhraseMatch(label, candidate) {
+  const source = label.toLowerCase();
+  const target = candidate.toLowerCase();
+  const index = source.indexOf(target);
+
+  if (index === -1) {
+    return false;
+  }
+
+  const before = index === 0 ? "" : label[index - 1];
+  const afterIndex = index + candidate.length;
+  const after = afterIndex >= label.length ? "" : label[afterIndex];
+  const beforeOk = index === 0 || /[\s([,-]/.test(before);
+  const afterOk = afterIndex >= label.length || /[\s)\],-]/.test(after);
+
+  return beforeOk && afterOk;
+}
+
+function resolveArchiveAlias(label, labelCounts) {
+  if (SPECIAL_ARCHIVE_LABELS.has(label) || (labelCounts.get(label) || 0) > 1 || label.includes("'")) {
+    return label;
+  }
+
+  const candidates = [...labelCounts.entries()]
+    .filter(([candidate, count]) => (
+      candidate !== label
+      && count > 1
+      && !SPECIAL_ARCHIVE_LABELS.has(candidate)
+      && candidate.length < label.length
+      && isArchivePhraseMatch(label, candidate)
+    ))
+    .sort((left, right) => {
+      if (right[0].length !== left[0].length) {
+        return right[0].length - left[0].length;
+      }
+
+      return right[1] - left[1];
+    });
+
+  return candidates[0]?.[0] || label;
+}
+
 export function getCharacterArchiveLabel(figure) {
   const character = (figure.character || "").trim();
   const name = figure.name || "";
@@ -209,10 +262,15 @@ export function getCharacterArchiveLabel(figure) {
 }
 
 export function groupFiguresByCharacter(figures, records) {
+  const rawLabels = figures.map((figure) => getCharacterArchiveLabel(figure));
+  const labelCounts = new Map();
+  rawLabels.forEach((label) => {
+    labelCounts.set(label, (labelCounts.get(label) || 0) + 1);
+  });
   const groups = new Map();
 
-  figures.forEach((figure) => {
-    const archiveCharacter = getCharacterArchiveLabel(figure);
+  figures.forEach((figure, index) => {
+    const archiveCharacter = resolveArchiveAlias(rawLabels[index], labelCounts);
     const current = groups.get(archiveCharacter) || {
       key: archiveCharacter,
       character: archiveCharacter,
