@@ -57,17 +57,25 @@ export function renderShellMarkup(seriesOptions) {
           <section class="rail-block">
             <div class="rail-title">Views</div>
             <div class="view-tabs">
-              <button class="view-tab is-active" id="tab-roster" data-action="set-view" data-view="roster">
-                <span>Roster</span>
-                <strong id="count-roster">0</strong>
+              <button class="view-tab is-active" id="tab-all" data-action="set-view" data-view="all">
+                <span>All Figures</span>
+                <strong id="count-all">0</strong>
               </button>
-              <button class="view-tab" id="tab-collection" data-action="set-view" data-view="collection">
-                <span>Collection</span>
-                <strong id="count-collection">0</strong>
+              <button class="view-tab" id="tab-owned" data-action="set-view" data-view="owned">
+                <span>Owned</span>
+                <strong id="count-owned">0</strong>
+              </button>
+              <button class="view-tab" id="tab-not-owned" data-action="set-view" data-view="not-owned">
+                <span>Not Owned</span>
+                <strong id="count-not-owned">0</strong>
               </button>
               <button class="view-tab" id="tab-wishlist" data-action="set-view" data-view="wishlist">
                 <span>Wishlist</span>
                 <strong id="count-wishlist">0</strong>
+              </button>
+              <button class="view-tab" id="tab-characters" data-action="set-view" data-view="characters">
+                <span>Unique Characters</span>
+                <strong id="count-characters">0</strong>
               </button>
             </div>
           </section>
@@ -130,13 +138,22 @@ export function renderShellMarkup(seriesOptions) {
 export function renderHeaderStats(stats, view) {
   return `
     <button
-      class="stat-card stat-card-link${view === "collection" ? " is-active" : ""}"
+      class="stat-card stat-card-link${view === "owned" ? " is-active" : ""}"
       data-action="set-view"
-      data-view="collection"
+      data-view="owned"
       type="button"
     >
       <span class="stat-label">Owned</span>
       <strong>${stats.ownedCount}</strong>
+    </button>
+    <button
+      class="stat-card stat-card-link${view === "not-owned" ? " is-active" : ""}"
+      data-action="set-view"
+      data-view="not-owned"
+      type="button"
+    >
+      <span class="stat-label">Not Owned</span>
+      <strong>${stats.notOwnedCount}</strong>
     </button>
     <button
       class="stat-card stat-card-link${view === "wishlist" ? " is-active" : ""}"
@@ -220,7 +237,7 @@ export function renderCatalogMeta(meta) {
   `;
 }
 
-export function renderDisplayModeControls(browseMode, figureDisplayMode, detailPanelOpen, hasSelectedFigure, hasCharacterFocus) {
+export function renderDisplayModeControls(figureDisplayMode, showingCharacterDirectory, detailPanelOpen, hasSelectedFigure, hasCharacterFocus) {
   const detailLabel = detailPanelOpen ? "Hide details" : "Show details";
   const detailDisabled = hasSelectedFigure ? "" : "disabled";
 
@@ -228,30 +245,23 @@ export function renderDisplayModeControls(browseMode, figureDisplayMode, detailP
     <div class="display-mode-shell" role="group" aria-label="Display mode">
       <span class="display-mode-label">Display mode</span>
       <button
-        class="display-mode-button${browseMode === "figures" && figureDisplayMode === "cards" ? " is-active" : ""}"
+        class="display-mode-button${!showingCharacterDirectory && figureDisplayMode === "cards" ? " is-active" : ""}"
         data-action="set-display-mode"
         data-display-mode="cards"
       >
         Intel cards
       </button>
       <button
-        class="display-mode-button${browseMode === "figures" && figureDisplayMode === "holotable" ? " is-active" : ""}"
+        class="display-mode-button${!showingCharacterDirectory && figureDisplayMode === "holotable" ? " is-active" : ""}"
         data-action="set-display-mode"
         data-display-mode="holotable"
       >
         TCS head wall
       </button>
-      <button
-        class="display-mode-button${browseMode === "characters" ? " is-active" : ""}"
-        data-action="set-display-mode"
-        data-display-mode="characters"
-      >
-        Character archive
-      </button>
       ${hasCharacterFocus
         ? `
           <button class="display-mode-button" data-action="open-character-directory">
-            Back to characters
+            Back to Unique Characters
           </button>
         `
         : ""}
@@ -267,22 +277,28 @@ export function renderDisplayModeControls(browseMode, figureDisplayMode, detailP
 }
 
 export function renderResultHeading(view, count, options = {}) {
-  if (options.browseMode === "characters" && !options.characterFocus) {
-    return `${count} unique characters in the archive`;
+  if (options.showingCharacterDirectory) {
+    return `${count} unique characters`;
   }
   if (options.characterFocus) {
     return `${count} ${options.characterFocus} variants`;
   }
-  if (view === "collection") {
+  if (view === "owned") {
     return `${count} owned figures on file`;
+  }
+  if (view === "not-owned") {
+    return `${count} figures still missing`;
   }
   if (view === "wishlist") {
     return `${count} ranked wishlist targets`;
   }
-  return `${count} figures in the roster`;
+  if (view === "characters") {
+    return `${count} unique characters`;
+  }
+  return `${count} figures in the full catalog`;
 }
 
-export function renderResultSubheading(filters, view, browseMode, figureDisplayMode, characterFocus) {
+export function renderResultSubheading(filters, view, showingCharacterDirectory, figureDisplayMode, characterFocus) {
   const parts = [];
   if (characterFocus) {
     parts.push(`focused on ${characterFocus}`);
@@ -293,7 +309,7 @@ export function renderResultSubheading(filters, view, browseMode, figureDisplayM
   if (filters.search) {
     parts.push(`search: "${filters.search}"`);
   }
-  if (browseMode === "characters" && !characterFocus) {
+  if (showingCharacterDirectory) {
     parts.push("grouped by unique character");
   } else if (view !== "wishlist") {
     const label = {
@@ -307,7 +323,7 @@ export function renderResultSubheading(filters, view, browseMode, figureDisplayM
     parts.push("sorted by wishlist rank");
   }
 
-  if (browseMode === "characters" && !characterFocus) {
+  if (showingCharacterDirectory) {
     parts.push("showing one entry per character");
   } else {
     parts.push(figureDisplayMode === "holotable" ? "showing TCS head wall" : "showing intel cards");
@@ -373,7 +389,7 @@ export function renderCharacterDirectory(entries) {
     return `
       <div class="empty-state">
         <h2>No characters match this scan.</h2>
-        <p>Clear the filters or switch views to surface a different character archive.</p>
+        <p>Clear the filters or switch views to surface a different set of unique characters.</p>
       </div>
     `;
   }
@@ -448,7 +464,7 @@ export function renderCharacterDirectoryPanel(entries) {
 
   return `
     <div class="detail-empty character-directory-panel">
-      <div class="eyebrow">Character archive</div>
+      <div class="eyebrow">Unique Characters</div>
       <h2>Select a character</h2>
       <p>Each tile groups every minifigure variant for that character into a single archive entry.</p>
       <div class="character-archive-metrics">
@@ -476,10 +492,10 @@ export function renderCharacterDirectoryPanel(entries) {
 export function renderCharacterFocusEmptyPanel(character) {
   return `
     <div class="detail-empty character-directory-panel">
-      <div class="eyebrow">Character archive</div>
+      <div class="eyebrow">Unique Characters</div>
       <h2>No variants visible for ${escapeHtml(character || "this character")}</h2>
-      <p>Adjust the active filters or go back to the character archive to pick a different character.</p>
-      <button class="ghost-button compact" data-action="open-character-directory" type="button">Back to characters</button>
+      <p>Adjust the active filters or go back to Unique Characters to pick a different character.</p>
+      <button class="ghost-button compact" data-action="open-character-directory" type="button">Back to Unique Characters</button>
     </div>
   `;
 }

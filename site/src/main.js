@@ -37,9 +37,8 @@ class HolocronApp {
       sort: "bricklink",
     };
     this.figureDisplayMode = this.loadDisplayMode();
-    this.browseMode = "figures";
     this.characterFocus = null;
-    this.view = "roster";
+    this.view = "all";
     this.saveState = "idle";
     this.lastSavedLabel = "";
     this.persistence = null;
@@ -110,12 +109,16 @@ class HolocronApp {
       searchInput: document.getElementById("search-input"),
       seriesFilter: document.getElementById("series-filter"),
       sortFilter: document.getElementById("sort-filter"),
-      tabRoster: document.getElementById("tab-roster"),
-      tabCollection: document.getElementById("tab-collection"),
+      tabAll: document.getElementById("tab-all"),
+      tabOwned: document.getElementById("tab-owned"),
+      tabNotOwned: document.getElementById("tab-not-owned"),
       tabWishlist: document.getElementById("tab-wishlist"),
-      countRoster: document.getElementById("count-roster"),
-      countCollection: document.getElementById("count-collection"),
+      tabCharacters: document.getElementById("tab-characters"),
+      countAll: document.getElementById("count-all"),
+      countOwned: document.getElementById("count-owned"),
+      countNotOwned: document.getElementById("count-not-owned"),
       countWishlist: document.getElementById("count-wishlist"),
+      countCharacters: document.getElementById("count-characters"),
     };
 
     this.refs.searchInput.value = this.filters.search;
@@ -168,30 +171,24 @@ class HolocronApp {
     }
 
     if (action === "set-view") {
-      this.view = actionTarget.dataset.view;
+      this.view = actionTarget.dataset.view || "all";
+      this.characterFocus = null;
       this.render();
       return;
     }
 
     if (action === "set-display-mode") {
       const nextMode = actionTarget.dataset.displayMode;
-      if (nextMode === "characters") {
-        this.browseMode = "characters";
-        this.characterFocus = null;
-        this.render();
-        return;
-      }
-
       this.figureDisplayMode = nextMode === "holotable" ? "holotable" : "cards";
-      this.browseMode = "figures";
       this.saveDisplayMode();
       this.render();
       return;
     }
 
     if (action === "open-character-directory") {
-      this.browseMode = "characters";
+      this.view = "characters";
       this.characterFocus = null;
+      this.detailPanelOpen = true;
       this.render();
       return;
     }
@@ -213,7 +210,6 @@ class HolocronApp {
 
     if (action === "select-character") {
       this.characterFocus = actionTarget.dataset.character || null;
-      this.browseMode = "figures";
       this.selectedId = null;
       this.detailPanelOpen = true;
       this.render();
@@ -411,12 +407,13 @@ class HolocronApp {
 
   render() {
     const stats = deriveStats(this.catalog, this.records);
+    const allCharacterEntries = groupFiguresByCharacter(this.catalog, this.records);
     const rosterFigures = filterAndSortFigures(this.catalog, this.records, this.view, this.filters);
     const characterEntries = groupFiguresByCharacter(rosterFigures, this.records);
     const visibleFigures = this.characterFocus
       ? rosterFigures.filter((figure) => getCharacterArchiveLabel(figure) === this.characterFocus)
       : rosterFigures;
-    const showingCharacterDirectory = this.browseMode === "characters" && !this.characterFocus;
+    const showingCharacterDirectory = this.view === "characters" && !this.characterFocus;
     const visibleFigureIds = new Set(visibleFigures.map((figure) => figure.id));
     const selectedFigure = !showingCharacterDirectory && visibleFigureIds.has(this.selectedId)
       ? this.catalogById.get(this.selectedId)
@@ -432,8 +429,8 @@ class HolocronApp {
     this.refs.catalogMeta.innerHTML = renderCatalogMeta(this.catalogMeta);
     const hasDetailContent = showingCharacterDirectory || Boolean(selectedFigure) || Boolean(this.characterFocus);
     this.refs.displayControls.innerHTML = renderDisplayModeControls(
-      this.browseMode,
       this.figureDisplayMode,
+      showingCharacterDirectory,
       this.detailPanelOpen,
       hasDetailContent,
       Boolean(this.characterFocus),
@@ -441,12 +438,12 @@ class HolocronApp {
     this.refs.resultHeading.textContent = renderResultHeading(
       this.view,
       showingCharacterDirectory ? characterEntries.length : visibleFigures.length,
-      { browseMode: this.browseMode, characterFocus: this.characterFocus },
+      { showingCharacterDirectory, characterFocus: this.characterFocus },
     );
     this.refs.resultSubheading.textContent = renderResultSubheading(
       this.filters,
       this.view,
-      this.browseMode,
+      showingCharacterDirectory,
       this.figureDisplayMode,
       this.characterFocus,
     );
@@ -454,9 +451,11 @@ class HolocronApp {
     if (showingCharacterDirectory) {
       this.refs.figureGrid.innerHTML = renderCharacterDirectory(characterEntries);
       this.refs.figureGrid.classList.remove("figure-grid-holotable");
+      this.refs.figureGrid.classList.add("figure-grid-character-directory");
       this.refs.detailPanel.innerHTML = renderCharacterDirectoryPanel(characterEntries);
     } else {
       this.refs.figureGrid.innerHTML = renderFigureGrid(visibleFigures, this.records, selectedFigure?.id || null, this.figureDisplayMode);
+      this.refs.figureGrid.classList.remove("figure-grid-character-directory");
       this.refs.figureGrid.classList.toggle("figure-grid-holotable", this.figureDisplayMode === "holotable");
       this.refs.detailPanel.innerHTML = selectedFigure
         ? renderDetailPanel(selectedFigure, selectedRecord, this.session, stats.wishlistCount)
@@ -466,13 +465,17 @@ class HolocronApp {
     this.refs.workspace.classList.toggle("workspace-detail-hidden", !this.detailPanelOpen);
     this.refs.detailPanel.classList.toggle("is-hidden", !this.detailPanelOpen);
 
-    this.refs.countRoster.textContent = String(this.catalog.length);
-    this.refs.countCollection.textContent = String(stats.ownedCount);
+    this.refs.countAll.textContent = String(this.catalog.length);
+    this.refs.countOwned.textContent = String(stats.ownedCount);
+    this.refs.countNotOwned.textContent = String(stats.notOwnedCount);
     this.refs.countWishlist.textContent = String(stats.wishlistCount);
+    this.refs.countCharacters.textContent = String(allCharacterEntries.length);
 
-    this.refs.tabRoster.classList.toggle("is-active", this.view === "roster");
-    this.refs.tabCollection.classList.toggle("is-active", this.view === "collection");
+    this.refs.tabAll.classList.toggle("is-active", this.view === "all");
+    this.refs.tabOwned.classList.toggle("is-active", this.view === "owned");
+    this.refs.tabNotOwned.classList.toggle("is-active", this.view === "not-owned");
     this.refs.tabWishlist.classList.toggle("is-active", this.view === "wishlist");
+    this.refs.tabCharacters.classList.toggle("is-active", this.view === "characters");
 
     this.refs.authOverlay.innerHTML = authOverlay.markup;
     this.refs.authOverlay.classList.toggle("is-hidden", authOverlay.hidden);

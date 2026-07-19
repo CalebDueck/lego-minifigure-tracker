@@ -536,10 +536,15 @@ a {
   display: block;
 }
 
+.figure-grid.figure-grid-character-directory {
+  display: block;
+}
+
 .character-directory-grid {
   display: grid;
+  width: 100%;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
 }
 
 .character-card {
@@ -582,6 +587,16 @@ a {
     radial-gradient(circle at 50% 24%, rgba(112, 207, 255, 0.22), transparent 56%),
     linear-gradient(180deg, rgba(3, 10, 20, 0.96), rgba(8, 21, 35, 0.96));
   overflow: hidden;
+}
+
+.character-card.has-owned .character-card-portrait {
+  border-color: rgba(126, 255, 177, 0.72);
+  box-shadow:
+    inset 0 0 0 1px rgba(126, 255, 177, 0.4),
+    0 0 0 1px rgba(126, 255, 177, 0.2);
+  background:
+    radial-gradient(circle at 50% 24%, rgba(126, 255, 177, 0.2), transparent 56%),
+    linear-gradient(180deg, rgba(3, 10, 20, 0.96), rgba(8, 21, 35, 0.96));
 }
 
 .character-card-portrait img {
@@ -631,12 +646,21 @@ a {
 .figure-card.is-selected {
   border-color: rgba(255, 222, 112, 0.9);
   box-shadow:
+    inset 0 0 0 1px rgba(255, 222, 112, 0.55),
     0 0 0 2px rgba(255, 222, 112, 0.5),
     0 18px 44px rgba(0, 0, 0, 0.32);
 }
 
+.figure-card.is-selected .portrait-shell {
+  border-color: rgba(255, 222, 112, 0.72);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 222, 112, 0.28),
+    0 0 0 1px rgba(255, 222, 112, 0.18);
+}
+
 .figure-card.is-selected .figure-character,
-.figure-card.is-selected .figure-order {
+.figure-card.is-selected .figure-order,
+.figure-card.is-selected .figure-name {
   color: var(--gold);
 }
 
@@ -1127,7 +1151,7 @@ a {
   }
 
   .character-directory-grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   }
 
   .holotable-grid {

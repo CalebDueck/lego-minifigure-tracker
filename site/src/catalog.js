@@ -86,6 +86,7 @@ export function cleanRecord(record) {
 
 export function deriveStats(catalog, records) {
   const ownedCount = Object.values(records).filter((record) => record.owned).length;
+  const notOwnedCount = Math.max(0, catalog.length - ownedCount);
   const wishlistCount = Object.values(records).filter((record) => Number.isInteger(record.wishlistRank)).length;
   const needsUpgradeCount = Object.values(records).filter((record) => record.owned && record.needsUpgrade).length;
   const completion = catalog.length ? Math.round((ownedCount / catalog.length) * 1000) / 10 : 0;
@@ -93,6 +94,7 @@ export function deriveStats(catalog, records) {
   return {
     total: catalog.length,
     ownedCount,
+    notOwnedCount,
     wishlistCount,
     needsUpgradeCount,
     completion,
@@ -162,6 +164,20 @@ function getDroidArchiveLabel(character, name) {
   return null;
 }
 
+function normalizeCharacterArchiveLabel(character) {
+  const cleanedCharacter = (character || "").trim();
+
+  if (!cleanedCharacter) {
+    return "Unknown Character";
+  }
+
+  return cleanedCharacter
+    .replace(/\s*\([^)]*\)\s*$/u, "")
+    .replace(/\s*\[[^\]]*\]\s*$/u, "")
+    .replace(/\s+-\s+.+$/u, "")
+    .trim() || "Unknown Character";
+}
+
 export function getCharacterArchiveLabel(figure) {
   const character = (figure.character || "").trim();
   const name = figure.name || "";
@@ -189,7 +205,7 @@ export function getCharacterArchiveLabel(figure) {
     return "Admirals";
   }
 
-  return character || "Unknown Character";
+  return normalizeCharacterArchiveLabel(character);
 }
 
 export function groupFiguresByCharacter(figures, records) {
@@ -227,8 +243,8 @@ export function groupFiguresByCharacter(figures, records) {
   });
 
   return [...groups.values()].sort((left, right) => compareTuple(
-    [left.character, left.earliestOrder],
-    [right.character, right.earliestOrder],
+    [-left.totalFigures, left.character, left.earliestOrder],
+    [-right.totalFigures, right.character, right.earliestOrder],
   ));
 }
 
@@ -237,7 +253,11 @@ export function filterAndSortFigures(catalog, records, view, filters) {
   const figures = catalog.filter((figure) => {
     const record = records[figure.id];
 
-    if (view === "collection" && !record?.owned) {
+    if (view === "owned" && !record?.owned) {
+      return false;
+    }
+
+    if (view === "not-owned" && record?.owned) {
       return false;
     }
 
