@@ -358,6 +358,10 @@ export function renderFigureGrid(figures, records, selectedId, displayMode) {
 function renderFigureCard(figure, record, selected) {
   const owned = Boolean(record?.owned);
   const wishlisted = Number.isInteger(record?.wishlistRank);
+  const stateClasses = [
+    owned ? "is-owned" : "",
+    selected ? "is-selected" : "",
+  ].filter(Boolean).join(" ");
   const badges = [
     owned ? badge("Owned", "owned") : "",
     wishlisted ? badge(`#${record.wishlistRank} wishlist`, "wishlist") : "",
@@ -365,7 +369,7 @@ function renderFigureCard(figure, record, selected) {
   ].join("");
 
   return `
-    <article class="figure-card${selected ? " is-selected" : ""}">
+    <article class="figure-card ${stateClasses}">
       <button class="figure-select" data-action="select-figure" data-id="${escapeHtml(figure.id)}">
         <div class="figure-order">#${String(figure.catalogOrder).padStart(4, "0")}</div>
         <div class="portrait-shell">

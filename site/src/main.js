@@ -31,7 +31,7 @@ class HolocronApp {
     this.seriesOptions = [];
     this.records = {};
     this.selectedId = null;
-    this.detailPanelOpen = true;
+    this.detailPanelOpen = false;
     this.filters = {
       search: "",
       series: "all",
@@ -62,7 +62,6 @@ class HolocronApp {
     this.catalogById = bundle.byId;
     this.catalogMeta = bundle.meta;
     this.seriesOptions = bundle.seriesOptions;
-    this.selectedId = this.catalog[0]?.id || null;
 
     this.persistence = await createPersistence(firebaseConfig);
     this.renderShell();
