@@ -87,7 +87,7 @@ export function renderShellMarkup(seriesOptions) {
               <input id="search-input" type="search" placeholder="Luke, clone, fig-003..." autocomplete="off">
             </label>
             <label class="field">
-              <span>Movie / series</span>
+              <span>Film / series</span>
               <select id="series-filter">
                 <option value="all">All stories</option>
                 ${formatSeriesOptions(seriesOptions)}
@@ -97,12 +97,23 @@ export function renderShellMarkup(seriesOptions) {
               <span>Sort</span>
               <select id="sort-filter">
                 <option value="bricklink">BrickLink / release order</option>
+                <option value="year">Year released</option>
+                <option value="name">Alphabetical</option>
+                <option value="series">Film / series</option>
                 <option value="character">Character</option>
-                <option value="series">Movie / series</option>
-                <option value="name">Name</option>
               </select>
             </label>
             <button class="ghost-button" data-action="clear-filters">Clear scan</button>
+          </section>
+
+          <section class="rail-block rail-display-block">
+            <div class="rail-title">Layout</div>
+            <div id="display-controls" class="display-controls"></div>
+            <div class="rail-legend">
+              ${badge("Owned", "owned")}
+              ${badge("Wishlist", "wishlist")}
+              ${badge("Needs upgrade", "warning")}
+            </div>
           </section>
 
           <section id="left-stats" class="rail-block"></section>
@@ -115,14 +126,6 @@ export function renderShellMarkup(seriesOptions) {
               <div id="result-nav" class="stage-nav"></div>
               <div id="result-heading" class="stage-heading">Roster loading...</div>
               <div id="result-subheading" class="stage-subheading"></div>
-            </div>
-            <div class="stage-tools">
-              <div id="display-controls" class="display-controls"></div>
-              <div class="stage-legend">
-                ${badge("Owned", "owned")}
-                ${badge("Wishlist", "wishlist")}
-                ${badge("Needs upgrade", "warning")}
-              </div>
             </div>
           </div>
           <div id="figure-grid" class="figure-grid"></div>
@@ -251,10 +254,7 @@ export function renderStageNav(characterFocus) {
   `;
 }
 
-export function renderDisplayModeControls(figureDisplayMode, showingCharacterDirectory, detailPanelOpen, hasSelectedFigure) {
-  const detailLabel = detailPanelOpen ? "Hide details" : "Show details";
-  const detailDisabled = hasSelectedFigure ? "" : "disabled";
-
+export function renderDisplayModeControls(figureDisplayMode, showingCharacterDirectory) {
   return `
     <div class="display-mode-shell" role="group" aria-label="Display mode">
       <span class="display-mode-label">Display mode</span>
@@ -271,13 +271,6 @@ export function renderDisplayModeControls(figureDisplayMode, showingCharacterDir
         data-display-mode="holotable"
       >
         TCS head wall
-      </button>
-      <button
-        class="display-mode-button display-mode-button-detail${detailPanelOpen ? " is-active" : ""}"
-        data-action="toggle-detail-panel"
-        ${detailDisabled}
-      >
-        ${detailLabel}
       </button>
     </div>
   `;
@@ -321,9 +314,10 @@ export function renderResultSubheading(filters, view, showingCharacterDirectory,
   } else if (view !== "wishlist") {
     const label = {
       bricklink: "sorted by BrickLink / release order",
+      year: "sorted by year released",
+      name: "sorted alphabetically",
+      series: "sorted by film / series",
       character: "sorted by character",
-      series: "sorted by movie / series",
-      name: "sorted by name",
     }[filters.sort];
     parts.push(label || "sorted by release order");
   } else {

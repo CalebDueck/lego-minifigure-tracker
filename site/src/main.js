@@ -431,12 +431,7 @@ class HolocronApp {
     this.refs.leftStats.innerHTML = renderLeftStats(stats);
     this.refs.catalogMeta.innerHTML = renderCatalogMeta(this.catalogMeta);
     this.refs.resultNav.innerHTML = renderStageNav(this.characterFocus);
-    this.refs.displayControls.innerHTML = renderDisplayModeControls(
-      this.figureDisplayMode,
-      showingCharacterDirectory,
-      detailPanelVisible,
-      Boolean(selectedFigure),
-    );
+    this.refs.displayControls.innerHTML = renderDisplayModeControls(this.figureDisplayMode, showingCharacterDirectory);
     this.refs.resultHeading.textContent = renderResultHeading(
       this.view,
       showingCharacterDirectory ? characterEntries.length : visibleFigures.length,

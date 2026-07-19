@@ -347,6 +347,10 @@ export function filterAndSortFigures(catalog, records, view, filters) {
 
   const sorters = {
     bricklink: (left, right) => compareBricklinkFallback(left, right),
+    year: (left, right) => compareTuple(
+      [left.releaseYear, left.catalogOrder],
+      [right.releaseYear, right.catalogOrder],
+    ),
     character: (left, right) => compareTuple(
       [left.character, left.name, left.catalogOrder],
       [right.character, right.name, right.catalogOrder],
