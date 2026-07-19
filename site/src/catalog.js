@@ -99,6 +99,139 @@ export function deriveStats(catalog, records) {
   };
 }
 
+function matchesAnyPattern(text, patterns) {
+  return patterns.some((pattern) => pattern.test(text));
+}
+
+function getDroidArchiveLabel(character, name) {
+  const text = `${character} ${name}`.trim();
+  const battleDroidPatterns = [
+    /\bBattle Droid\b/i,
+    /\bSuper Battle Droid\b/i,
+    /\bCommando Droid\b/i,
+    /\bDroideka\b/i,
+    /\bDestroyer Droid\b/i,
+    /\bSpider Droid\b/i,
+    /\bBuzz Droid\b/i,
+    /\bProbe Droid\b/i,
+    /\bAssassin Droid\b/i,
+    /\bTactical Droid\b/i,
+  ];
+  const astromechPatterns = [
+    /\bAstromech Droid\b/i,
+    /\bR[2-7]-[A-Z0-9]+\b/i,
+    /\bBB-\d+[A-Z]?\b/i,
+    /\bBB-9E\b/i,
+    /\bC1-10P\b/i,
+    /\bChopper\b/i,
+    /\bD-O\b/i,
+    /\bQT-KT\b/i,
+  ];
+  const protocolDroidPatterns = [
+    /\bProtocol Droid\b/i,
+    /\bC-3PO\b/i,
+    /\bTC-14\b/i,
+    /\bU-3PO\b/i,
+    /\bRA-7\b/i,
+    /\bNI-L8\b/i,
+    /\bCZ-\dPO\b/i,
+  ];
+  const namedDroidPatterns = [
+    /\bK-2SO\b/i,
+    /\bIG-11\b/i,
+    /\bIG-88\b/i,
+    /\bL0-LA59\b/i,
+  ];
+
+  if (matchesAnyPattern(text, battleDroidPatterns)) {
+    return "Battle Droids";
+  }
+
+  if (matchesAnyPattern(text, astromechPatterns)) {
+    return "Astromechs";
+  }
+
+  if (matchesAnyPattern(text, protocolDroidPatterns)) {
+    return "Protocol Droids";
+  }
+
+  if (/\bDroid\b/i.test(text) || matchesAnyPattern(text, namedDroidPatterns)) {
+    return "Other Droids";
+  }
+
+  return null;
+}
+
+export function getCharacterArchiveLabel(figure) {
+  const character = (figure.character || "").trim();
+  const name = figure.name || "";
+  const droidArchiveLabel = getDroidArchiveLabel(character, name);
+
+  if (character === "Clone Trooper") {
+    if (/Phase I Armor/i.test(name)) {
+      return "Clone Trooper - Phase 1";
+    }
+
+    if (/Phase II Armor/i.test(name)) {
+      return "Clone Trooper - Phase 2";
+    }
+  }
+
+  if (droidArchiveLabel) {
+    return droidArchiveLabel;
+  }
+
+  if (/\bCommander\b/i.test(character) || /\bCommander\b/i.test(name)) {
+    return "Commanders";
+  }
+
+  if (/\bAdmiral\b/i.test(character) || /\bAdmiral\b/i.test(name)) {
+    return "Admirals";
+  }
+
+  return character || "Unknown Character";
+}
+
+export function groupFiguresByCharacter(figures, records) {
+  const groups = new Map();
+
+  figures.forEach((figure) => {
+    const archiveCharacter = getCharacterArchiveLabel(figure);
+    const current = groups.get(archiveCharacter) || {
+      key: archiveCharacter,
+      character: archiveCharacter,
+      representativeFigure: figure,
+      totalFigures: 0,
+      ownedFigures: 0,
+      wishlistFigures: 0,
+      earliestYear: figure.releaseYear,
+      earliestOrder: figure.catalogOrder,
+      searchText: figure.searchText,
+    };
+
+    current.totalFigures += 1;
+    if (records[figure.id]?.owned) {
+      current.ownedFigures += 1;
+    }
+    if (Number.isInteger(records[figure.id]?.wishlistRank)) {
+      current.wishlistFigures += 1;
+    }
+
+    if (figure.catalogOrder < current.earliestOrder) {
+      current.representativeFigure = figure;
+      current.earliestYear = figure.releaseYear;
+      current.earliestOrder = figure.catalogOrder;
+    }
+
+    groups.set(archiveCharacter, current);
+  });
+
+  return [...groups.values()].sort((left, right) => compareTuple(
+    [left.character, left.earliestOrder],
+    [right.character, right.earliestOrder],
+  ));
+}
+
 export function filterAndSortFigures(catalog, records, view, filters) {
   const query = filters.search.trim().toLowerCase();
   const figures = catalog.filter((figure) => {

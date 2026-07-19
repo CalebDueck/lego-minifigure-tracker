@@ -220,7 +220,7 @@ export function renderCatalogMeta(meta) {
   `;
 }
 
-export function renderDisplayModeControls(displayMode, detailPanelOpen, hasSelectedFigure) {
+export function renderDisplayModeControls(browseMode, figureDisplayMode, detailPanelOpen, hasSelectedFigure, hasCharacterFocus) {
   const detailLabel = detailPanelOpen ? "Hide details" : "Show details";
   const detailDisabled = hasSelectedFigure ? "" : "disabled";
 
@@ -228,19 +228,33 @@ export function renderDisplayModeControls(displayMode, detailPanelOpen, hasSelec
     <div class="display-mode-shell" role="group" aria-label="Display mode">
       <span class="display-mode-label">Display mode</span>
       <button
-        class="display-mode-button${displayMode === "cards" ? " is-active" : ""}"
+        class="display-mode-button${browseMode === "figures" && figureDisplayMode === "cards" ? " is-active" : ""}"
         data-action="set-display-mode"
         data-display-mode="cards"
       >
         Intel cards
       </button>
       <button
-        class="display-mode-button${displayMode === "holotable" ? " is-active" : ""}"
+        class="display-mode-button${browseMode === "figures" && figureDisplayMode === "holotable" ? " is-active" : ""}"
         data-action="set-display-mode"
         data-display-mode="holotable"
       >
         TCS head wall
       </button>
+      <button
+        class="display-mode-button${browseMode === "characters" ? " is-active" : ""}"
+        data-action="set-display-mode"
+        data-display-mode="characters"
+      >
+        Character archive
+      </button>
+      ${hasCharacterFocus
+        ? `
+          <button class="display-mode-button" data-action="open-character-directory">
+            Back to characters
+          </button>
+        `
+        : ""}
       <button
         class="display-mode-button display-mode-button-detail${detailPanelOpen ? " is-active" : ""}"
         data-action="toggle-detail-panel"
@@ -252,7 +266,13 @@ export function renderDisplayModeControls(displayMode, detailPanelOpen, hasSelec
   `;
 }
 
-export function renderResultHeading(view, count) {
+export function renderResultHeading(view, count, options = {}) {
+  if (options.browseMode === "characters" && !options.characterFocus) {
+    return `${count} unique characters in the archive`;
+  }
+  if (options.characterFocus) {
+    return `${count} ${options.characterFocus} variants`;
+  }
   if (view === "collection") {
     return `${count} owned figures on file`;
   }
@@ -262,15 +282,20 @@ export function renderResultHeading(view, count) {
   return `${count} figures in the roster`;
 }
 
-export function renderResultSubheading(filters, view, displayMode) {
+export function renderResultSubheading(filters, view, browseMode, figureDisplayMode, characterFocus) {
   const parts = [];
+  if (characterFocus) {
+    parts.push(`focused on ${characterFocus}`);
+  }
   if (filters.series !== "all") {
     parts.push(filters.series);
   }
   if (filters.search) {
     parts.push(`search: "${filters.search}"`);
   }
-  if (view !== "wishlist") {
+  if (browseMode === "characters" && !characterFocus) {
+    parts.push("grouped by unique character");
+  } else if (view !== "wishlist") {
     const label = {
       bricklink: "sorted by BrickLink / release order",
       character: "sorted by character",
@@ -282,7 +307,11 @@ export function renderResultSubheading(filters, view, displayMode) {
     parts.push("sorted by wishlist rank");
   }
 
-  parts.push(displayMode === "holotable" ? "showing TCS head wall" : "showing intel cards");
+  if (browseMode === "characters" && !characterFocus) {
+    parts.push("showing one entry per character");
+  } else {
+    parts.push(figureDisplayMode === "holotable" ? "showing TCS head wall" : "showing intel cards");
+  }
   return parts.join(" | ");
 }
 
@@ -339,6 +368,42 @@ function renderFigureCard(figure, record, selected) {
   `;
 }
 
+export function renderCharacterDirectory(entries) {
+  if (!entries.length) {
+    return `
+      <div class="empty-state">
+        <h2>No characters match this scan.</h2>
+        <p>Clear the filters or switch views to surface a different character archive.</p>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="character-directory-grid">
+      ${entries.map((entry) => renderCharacterCard(entry)).join("")}
+    </div>
+  `;
+}
+
+function renderCharacterCard(entry) {
+  const figure = entry.representativeFigure;
+  const ownedLabel = entry.ownedFigures === 1 ? "1 owned" : `${entry.ownedFigures} owned`;
+  const totalLabel = entry.totalFigures === 1 ? "1 variant" : `${entry.totalFigures} variants`;
+
+  return `
+    <article class="character-card${entry.ownedFigures ? " has-owned" : ""}">
+      <button class="character-card-button" data-action="select-character" data-character="${escapeHtml(entry.character)}">
+        <div class="character-card-portrait">
+          <img src="${escapeHtml(figure.imageUrl)}" alt="${escapeHtml(entry.character)}" loading="lazy">
+        </div>
+        <div class="character-card-name">${escapeHtml(entry.character)}</div>
+        <div class="character-card-meta">${escapeHtml(totalLabel)}</div>
+        <div class="character-card-owned">${escapeHtml(ownedLabel)}</div>
+      </button>
+    </article>
+  `;
+}
+
 function renderHolotable(figures, records, selectedId) {
   return `
     <div class="holotable-grid">
@@ -373,6 +438,49 @@ function renderHolotableToken(figure, record, selected) {
         <div class="figure-token-year">${escapeHtml(figure.releaseYear)}</div>
       </button>
     </article>
+  `;
+}
+
+export function renderCharacterDirectoryPanel(entries) {
+  const totalVariants = entries.reduce((sum, entry) => sum + entry.totalFigures, 0);
+  const ownedVariants = entries.reduce((sum, entry) => sum + entry.ownedFigures, 0);
+  const ownedCharacters = entries.filter((entry) => entry.ownedFigures > 0).length;
+
+  return `
+    <div class="detail-empty character-directory-panel">
+      <div class="eyebrow">Character archive</div>
+      <h2>Select a character</h2>
+      <p>Each tile groups every minifigure variant for that character into a single archive entry.</p>
+      <div class="character-archive-metrics">
+        <div class="archive-metric">
+          <span>Characters</span>
+          <strong>${entries.length}</strong>
+        </div>
+        <div class="archive-metric">
+          <span>Variants shown</span>
+          <strong>${totalVariants}</strong>
+        </div>
+        <div class="archive-metric">
+          <span>Owned variants</span>
+          <strong>${ownedVariants}</strong>
+        </div>
+        <div class="archive-metric">
+          <span>Owned characters</span>
+          <strong>${ownedCharacters}</strong>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+export function renderCharacterFocusEmptyPanel(character) {
+  return `
+    <div class="detail-empty character-directory-panel">
+      <div class="eyebrow">Character archive</div>
+      <h2>No variants visible for ${escapeHtml(character || "this character")}</h2>
+      <p>Adjust the active filters or go back to the character archive to pick a different character.</p>
+      <button class="ghost-button compact" data-action="open-character-directory" type="button">Back to characters</button>
+    </div>
   `;
 }
 

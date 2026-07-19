@@ -1,4 +1,4 @@
-import { loadCatalogBundle, deriveStats, filterAndSortFigures, cleanRecord, getWishlistIds, normalizeWishlistRanks } from "./catalog.js";
+import { loadCatalogBundle, deriveStats, filterAndSortFigures, cleanRecord, getWishlistIds, normalizeWishlistRanks, groupFiguresByCharacter, getCharacterArchiveLabel } from "./catalog.js";
 import { firebaseConfig } from "./firebase-config.js";
 import { createPersistence } from "./persistence.js";
 import {
@@ -11,6 +11,9 @@ import {
   renderResultHeading,
   renderResultSubheading,
   renderFigureGrid,
+  renderCharacterDirectory,
+  renderCharacterDirectoryPanel,
+  renderCharacterFocusEmptyPanel,
   renderDetailPanel,
   renderAuthOverlay,
 } from "./ui.js";
@@ -33,7 +36,9 @@ class HolocronApp {
       series: "all",
       sort: "bricklink",
     };
-    this.displayMode = this.loadDisplayMode();
+    this.figureDisplayMode = this.loadDisplayMode();
+    this.browseMode = "figures";
+    this.characterFocus = null;
     this.view = "roster";
     this.saveState = "idle";
     this.lastSavedLabel = "";
@@ -130,7 +135,7 @@ class HolocronApp {
 
   saveDisplayMode() {
     try {
-      window.localStorage.setItem(DISPLAY_MODE_KEY, this.displayMode);
+      window.localStorage.setItem(DISPLAY_MODE_KEY, this.figureDisplayMode);
     } catch (error) {
       // ignore local preference write failures
     }
@@ -169,8 +174,24 @@ class HolocronApp {
     }
 
     if (action === "set-display-mode") {
-      this.displayMode = actionTarget.dataset.displayMode === "holotable" ? "holotable" : "cards";
+      const nextMode = actionTarget.dataset.displayMode;
+      if (nextMode === "characters") {
+        this.browseMode = "characters";
+        this.characterFocus = null;
+        this.render();
+        return;
+      }
+
+      this.figureDisplayMode = nextMode === "holotable" ? "holotable" : "cards";
+      this.browseMode = "figures";
       this.saveDisplayMode();
+      this.render();
+      return;
+    }
+
+    if (action === "open-character-directory") {
+      this.browseMode = "characters";
+      this.characterFocus = null;
       this.render();
       return;
     }
@@ -186,6 +207,15 @@ class HolocronApp {
       this.refs.searchInput.value = "";
       this.refs.seriesFilter.value = "all";
       this.refs.sortFilter.value = "bricklink";
+      this.render();
+      return;
+    }
+
+    if (action === "select-character") {
+      this.characterFocus = actionTarget.dataset.character || null;
+      this.browseMode = "figures";
+      this.selectedId = null;
+      this.detailPanelOpen = true;
       this.render();
       return;
     }
@@ -381,8 +411,18 @@ class HolocronApp {
 
   render() {
     const stats = deriveStats(this.catalog, this.records);
-    const visibleFigures = filterAndSortFigures(this.catalog, this.records, this.view, this.filters);
-    const selectedFigure = this.catalogById.get(this.selectedId) || visibleFigures[0] || this.catalog[0] || null;
+    const rosterFigures = filterAndSortFigures(this.catalog, this.records, this.view, this.filters);
+    const characterEntries = groupFiguresByCharacter(rosterFigures, this.records);
+    const visibleFigures = this.characterFocus
+      ? rosterFigures.filter((figure) => getCharacterArchiveLabel(figure) === this.characterFocus)
+      : rosterFigures;
+    const showingCharacterDirectory = this.browseMode === "characters" && !this.characterFocus;
+    const visibleFigureIds = new Set(visibleFigures.map((figure) => figure.id));
+    const selectedFigure = !showingCharacterDirectory && visibleFigureIds.has(this.selectedId)
+      ? this.catalogById.get(this.selectedId)
+      : !showingCharacterDirectory
+        ? visibleFigures[0] || null
+        : null;
     const selectedRecord = selectedFigure ? this.records[selectedFigure.id] : null;
     const authOverlay = renderAuthOverlay(this.session);
 
@@ -390,12 +430,39 @@ class HolocronApp {
     this.refs.modeBar.innerHTML = renderModeBar(this.session, this.saveState, this.lastSavedLabel, CONFIG_PATH);
     this.refs.leftStats.innerHTML = renderLeftStats(stats);
     this.refs.catalogMeta.innerHTML = renderCatalogMeta(this.catalogMeta);
-    this.refs.displayControls.innerHTML = renderDisplayModeControls(this.displayMode, this.detailPanelOpen, Boolean(selectedFigure));
-    this.refs.resultHeading.textContent = renderResultHeading(this.view, visibleFigures.length);
-    this.refs.resultSubheading.textContent = renderResultSubheading(this.filters, this.view, this.displayMode);
-    this.refs.figureGrid.innerHTML = renderFigureGrid(visibleFigures, this.records, selectedFigure?.id || null, this.displayMode);
-    this.refs.figureGrid.classList.toggle("figure-grid-holotable", this.displayMode === "holotable");
-    this.refs.detailPanel.innerHTML = renderDetailPanel(selectedFigure, selectedRecord, this.session, stats.wishlistCount);
+    const hasDetailContent = showingCharacterDirectory || Boolean(selectedFigure) || Boolean(this.characterFocus);
+    this.refs.displayControls.innerHTML = renderDisplayModeControls(
+      this.browseMode,
+      this.figureDisplayMode,
+      this.detailPanelOpen,
+      hasDetailContent,
+      Boolean(this.characterFocus),
+    );
+    this.refs.resultHeading.textContent = renderResultHeading(
+      this.view,
+      showingCharacterDirectory ? characterEntries.length : visibleFigures.length,
+      { browseMode: this.browseMode, characterFocus: this.characterFocus },
+    );
+    this.refs.resultSubheading.textContent = renderResultSubheading(
+      this.filters,
+      this.view,
+      this.browseMode,
+      this.figureDisplayMode,
+      this.characterFocus,
+    );
+
+    if (showingCharacterDirectory) {
+      this.refs.figureGrid.innerHTML = renderCharacterDirectory(characterEntries);
+      this.refs.figureGrid.classList.remove("figure-grid-holotable");
+      this.refs.detailPanel.innerHTML = renderCharacterDirectoryPanel(characterEntries);
+    } else {
+      this.refs.figureGrid.innerHTML = renderFigureGrid(visibleFigures, this.records, selectedFigure?.id || null, this.figureDisplayMode);
+      this.refs.figureGrid.classList.toggle("figure-grid-holotable", this.figureDisplayMode === "holotable");
+      this.refs.detailPanel.innerHTML = selectedFigure
+        ? renderDetailPanel(selectedFigure, selectedRecord, this.session, stats.wishlistCount)
+        : renderCharacterFocusEmptyPanel(this.characterFocus);
+    }
+
     this.refs.workspace.classList.toggle("workspace-detail-hidden", !this.detailPanelOpen);
     this.refs.detailPanel.classList.toggle("is-hidden", !this.detailPanelOpen);
 
