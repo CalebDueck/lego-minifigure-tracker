@@ -148,14 +148,14 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.95rem 1.2rem;
+  padding: 0.7rem 1rem;
   overflow: visible;
   z-index: 18;
 }
 
 .site-title-link {
-  display: grid;
-  gap: 0.28rem;
+  display: inline-flex;
+  align-items: center;
   padding: 0;
   border: 0;
   background: transparent;
@@ -177,9 +177,13 @@ a {
 }
 
 .site-title {
-  font-family: "Audiowide", sans-serif;
-  font-size: clamp(1rem, 1.8vw, 1.35rem);
-  line-height: 1.15;
+  color: var(--muted);
+  font-family: "Oxanium", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
   transition: color 0.2s ease;
 }
 
@@ -1538,8 +1542,8 @@ a {
   }
 
   .site-bar {
-    flex-direction: column;
-    align-items: stretch;
+    flex-wrap: wrap;
+    align-items: center;
   }
 
   .control-bar {
@@ -1599,8 +1603,13 @@ a {
     border-radius: 20px;
   }
 
+  .site-bar {
+    gap: 0.65rem;
+    padding: 0.62rem 0.85rem;
+  }
+
   .site-title {
-    font-size: 0.98rem;
+    font-size: 0.74rem;
   }
 
   .view-tab {
