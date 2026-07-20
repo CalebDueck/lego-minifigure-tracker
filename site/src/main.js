@@ -1,6 +1,6 @@
-import { loadCatalogBundle, deriveStats, filterAndSortFigures, cleanRecord, getWishlistIds, normalizeWishlistRanks, groupFiguresByCharacter, getCharacterArchiveLabel } from "./catalog.js?v=20260720c";
-import { firebaseConfig } from "./firebase-config.js?v=20260720c";
-import { createPersistence } from "./persistence.js?v=20260720c";
+import { loadCatalogBundle, deriveStats, filterAndSortFigures, cleanRecord, getWishlistIds, normalizeWishlistRanks, groupFiguresByCharacter, getCharacterArchiveLabel } from "./catalog.js?v=20260720d";
+import { firebaseConfig } from "./firebase-config.js?v=20260720d";
+import { createPersistence } from "./persistence.js?v=20260720d";
 import {
   renderShellMarkup,
   renderSiteAccountControl,
@@ -17,7 +17,7 @@ import {
   renderDetailPanel,
   renderImageOverlay,
   renderAuthOverlay,
-} from "./ui.js?v=20260720c";
+} from "./ui.js?v=20260720d";
 
 const DISPLAY_MODE_KEY = "sw-holocron-display-mode";
 
