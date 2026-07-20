@@ -1284,20 +1284,21 @@ a {
 .detail-portrait-shell {
   display: grid;
   gap: 0.7rem;
+  justify-items: start;
 }
 
 .detail-portrait {
   display: grid;
   place-items: center;
-  padding: 1rem;
-  min-height: 140px;
+  width: min(100%, 120px);
+  aspect-ratio: 1;
+  padding: 0.85rem;
   border-radius: 22px;
   border: 1px solid rgba(112, 207, 255, 0.15);
   background: radial-gradient(circle at 50% 22%, rgba(112, 207, 255, 0.16), transparent 54%), rgba(255, 255, 255, 0.03);
 }
 
 .detail-portrait-button {
-  width: 100%;
   cursor: zoom-in;
   text-align: center;
 }

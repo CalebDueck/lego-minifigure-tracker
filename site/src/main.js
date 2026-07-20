@@ -478,9 +478,10 @@ class HolocronApp {
       : rosterFigures;
     const showingCharacterDirectory = this.view === "characters" && !this.characterFocus;
     const visibleFigureIds = new Set(visibleFigures.map((figure) => figure.id));
-    const selectedFigure = !isHomeView && !isAboutView && !showingCharacterDirectory && visibleFigureIds.has(this.selectedId)
+    const selectedFigure = !isHomeView && !isAboutView && !showingCharacterDirectory && this.selectedId
       ? this.catalogById.get(this.selectedId)
       : null;
+    const selectedFigureIsVisible = Boolean(selectedFigure && visibleFigureIds.has(selectedFigure.id));
     const selectedRecord = selectedFigure ? this.records[selectedFigure.id] : null;
     const imageOverlay = renderImageOverlay(this.imageLightbox);
     const authOverlay = renderAuthOverlay(this.session, this.view);
@@ -528,7 +529,12 @@ class HolocronApp {
       this.refs.figureGrid.classList.add("figure-grid-character-directory");
       this.refs.detailPanel.innerHTML = "";
     } else {
-      this.refs.figureGrid.innerHTML = renderFigureGrid(visibleFigures, this.records, selectedFigure?.id || null, this.figureDisplayMode);
+      this.refs.figureGrid.innerHTML = renderFigureGrid(
+        visibleFigures,
+        this.records,
+        selectedFigureIsVisible ? selectedFigure.id : null,
+        this.figureDisplayMode,
+      );
       this.refs.figureGrid.classList.remove("figure-grid-character-directory", "figure-grid-home", "figure-grid-about");
       this.refs.figureGrid.classList.toggle("figure-grid-holotable", this.figureDisplayMode === "holotable");
       this.refs.detailPanel.innerHTML = selectedFigure
