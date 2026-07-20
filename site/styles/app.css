@@ -443,12 +443,6 @@ a {
   min-width: fit-content;
 }
 
-.rail-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-}
-
 .workspace {
   display: block;
   margin-top: 1rem;

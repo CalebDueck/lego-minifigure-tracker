@@ -132,10 +132,6 @@ export function renderShellMarkup(seriesOptions) {
         <div id="layout-controls-block" class="control-group control-group-layout">
           <div class="rail-title">Layout</div>
           <div id="display-controls" class="display-controls"></div>
-          <div class="rail-legend">
-            ${badge("Owned", "owned")}
-            ${badge("Wishlist", "wishlist")}
-          </div>
         </div>
       </section>
 
