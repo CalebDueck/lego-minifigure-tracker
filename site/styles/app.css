@@ -190,9 +190,17 @@ a {
   align-items: center;
 }
 
+.minifig-icon {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  fill: currentColor;
+}
+
 .account-pill {
   display: inline-flex;
   align-items: center;
+  gap: 0.55rem;
   padding: 0.58rem 0.9rem;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -208,6 +216,14 @@ a {
 
 .account-menu {
   position: relative;
+}
+
+.account-menu > summary {
+  list-style: none;
+}
+
+.account-menu > summary::-webkit-details-marker {
+  display: none;
 }
 
 .account-trigger {
@@ -227,6 +243,11 @@ a {
   color: var(--gold);
   font-size: 0.9rem;
   line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.account-menu[open] .account-caret {
+  transform: rotate(180deg);
 }
 
 .account-dropdown {

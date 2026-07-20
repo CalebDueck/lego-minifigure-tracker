@@ -27,6 +27,15 @@ function brickLinkSetUrl(appearance) {
   return `https://www.bricklink.com/v2/catalog/catalogitem.page?S=${encodeURIComponent(appearance.set_num)}`;
 }
 
+function minifigureIcon() {
+  return `
+    <svg class="minifig-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="4.9" r="2.9"></circle>
+      <path d="M8.2 8.2h7.6c1.1 0 2 .9 2 2v2.2c0 .8-.6 1.4-1.4 1.4h-.9v5.7c0 .9-.7 1.6-1.6 1.6h-1.2v-4.7h-1.4v4.7h-1.2c-.9 0-1.6-.7-1.6-1.6v-5.7h-.9c-.8 0-1.4-.6-1.4-1.4v-2.2c0-1.1.9-2 2-2Z"></path>
+    </svg>
+  `;
+}
+
 function initials(value) {
   return String(value || "")
     .split(/\s+/)
@@ -247,40 +256,39 @@ export function renderSiteAccountControl(session, accountMenuOpen) {
   if (session.mode !== "firebase") {
     return `
       <div class="account-pill" aria-label="Local mode">
+        ${minifigureIcon()}
         <span class="account-pill-label">Local mode</span>
       </div>
     `;
   }
 
   if (!session.user) {
-    return `<button class="ghost-button compact account-trigger" data-action="sign-in" type="button">Log in</button>`;
+    return `
+      <button class="ghost-button compact account-trigger" data-action="sign-in" type="button">
+        ${minifigureIcon()}
+        <span>Log in</span>
+      </button>
+    `;
   }
 
   const displayName = session.user.displayName || session.user.email || "Signed in";
   const showEmail = Boolean(session.user.email && session.user.email !== displayName);
 
   return `
-    <div class="account-menu${accountMenuOpen ? " is-open" : ""}">
-      <button
-        class="ghost-button compact account-trigger"
-        data-action="toggle-account-menu"
-        type="button"
-        aria-haspopup="menu"
-        aria-expanded="${accountMenuOpen ? "true" : "false"}"
-      >
+    <details class="account-menu">
+      <summary class="ghost-button compact account-trigger">
+        ${minifigureIcon()}
         <span class="account-trigger-name">${escapeHtml(displayName)}</span>
         <span class="account-caret" aria-hidden="true">▾</span>
-      </button>
-      ${accountMenuOpen ? `
-        <div class="account-dropdown" role="menu">
-          <div class="account-dropdown-copy">
-            <strong>${escapeHtml(displayName)}</strong>
-            ${showEmail ? `<span>${escapeHtml(session.user.email)}</span>` : ""}
-          </div>
-          <button class="ghost-button compact account-dropdown-button" data-action="sign-out" type="button" role="menuitem">Log out</button>
+      </summary>
+      <div class="account-dropdown" role="menu">
+        <div class="account-dropdown-copy">
+          <strong>${escapeHtml(displayName)}</strong>
+          ${showEmail ? `<span>${escapeHtml(session.user.email)}</span>` : ""}
         </div>
-      ` : ""}
-    </div>
+        <button class="ghost-button compact account-dropdown-button" data-action="sign-out" type="button" role="menuitem">Log out</button>
+      </div>
+    </details>
   `;
 }
 
