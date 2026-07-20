@@ -86,7 +86,9 @@ export function renderShellMarkup(seriesOptions) {
           <h1>Lego: The Complete Star Wars Minifigure Compendium</h1>
           <p>Track the full roster, log your collection, and manage a ranked wishlist in a TCS-inspired command deck.</p>
         </div>
-        <div id="header-stats" class="header-stats"></div>
+        <div class="header-stats-block">
+          <div id="header-stats" class="header-stats"></div>
+        </div>
       </header>
 
       <section id="control-bar" class="control-bar panel">

@@ -293,8 +293,8 @@ a {
 
 .command-deck {
   display: grid;
-  gap: 1.5rem;
-  grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.8fr);
+  gap: 1.2rem;
+  grid-template-columns: minmax(0, 1fr);
   padding: 1.8rem;
 }
 
@@ -307,10 +307,17 @@ a {
   margin-top: 0.7rem;
 }
 
+.header-stats-block {
+  padding: 1rem 1.05rem;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: linear-gradient(180deg, rgba(6, 12, 24, 0.88), rgba(10, 24, 41, 0.82));
+}
+
 .header-stats {
   display: grid;
   gap: 0.9rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .stat-card {
