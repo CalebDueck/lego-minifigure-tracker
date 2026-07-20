@@ -471,7 +471,8 @@ a {
 .view-tab,
 .ghost-button,
 .primary-button,
-.mini-button {
+.mini-button,
+.state-toggle-button {
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 18px;
   cursor: pointer;
@@ -497,6 +498,7 @@ a {
 .ghost-button:hover,
 .primary-button:hover,
 .mini-button:hover,
+.state-toggle-button:hover,
 .figure-card:hover {
   transform: translateY(-2px);
   border-color: rgba(255, 222, 112, 0.35);
@@ -1029,19 +1031,25 @@ a {
   padding: 0 1rem 1rem;
 }
 
-.mini-button {
+.mini-button,
+.state-toggle-button {
   padding: 0.75rem 0.7rem;
+}
+
+.mini-button {
   background: rgba(255, 255, 255, 0.03);
 }
 
-.mini-button.is-active {
-  border-color: rgba(126, 255, 177, 0.32);
-  color: var(--green);
+.state-toggle-button {
+  background: linear-gradient(180deg, rgba(112, 207, 255, 0.16), rgba(112, 207, 255, 0.08));
+  border-color: rgba(112, 207, 255, 0.3);
+  color: var(--cyan);
 }
 
-.mini-button.is-active.wishlist {
-  border-color: rgba(255, 222, 112, 0.32);
-  color: var(--gold);
+.state-toggle-button.is-active {
+  background: linear-gradient(180deg, rgba(126, 255, 177, 0.18), rgba(126, 255, 177, 0.08));
+  border-color: rgba(126, 255, 177, 0.34);
+  color: var(--green);
 }
 
 .holotable-grid {

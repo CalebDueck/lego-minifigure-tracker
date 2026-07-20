@@ -454,7 +454,6 @@ function renderFigureCard(figure, record, selected) {
     selected ? "is-selected" : "",
   ].filter(Boolean).join(" ");
   const badges = [
-    owned ? badge("Owned", "owned") : "",
     wishlisted ? badge(`#${record.wishlistRank} wishlist`, "wishlist") : "",
   ].join("");
 
@@ -474,11 +473,11 @@ function renderFigureCard(figure, record, selected) {
       </div>
       <div class="figure-badges">${badges}</div>
       <div class="figure-actions">
-        <button class="mini-button ${owned ? "is-active" : ""}" data-action="toggle-owned" data-id="${escapeHtml(figure.id)}">
-          ${owned ? "Owned" : "Log owned"}
+        <button class="state-toggle-button ${owned ? "is-active" : ""}" data-action="toggle-owned" data-id="${escapeHtml(figure.id)}">
+          ${owned ? "Owned" : "Owned?"}
         </button>
-        <button class="mini-button ${wishlisted ? "is-active wishlist" : ""}" data-action="toggle-wishlist" data-id="${escapeHtml(figure.id)}">
-          ${wishlisted ? "Wishlisted" : "Wishlist"}
+        <button class="state-toggle-button ${wishlisted ? "is-active" : ""}" data-action="toggle-wishlist" data-id="${escapeHtml(figure.id)}">
+          ${wishlisted ? "Wishlisted" : "Wishlist?"}
         </button>
       </div>
     </article>
@@ -624,7 +623,7 @@ export function renderDetailPanel(figure, record, session, wishlistCount) {
       </div>
     `
     : `
-      <button class="primary-button secondary" data-action="toggle-wishlist" data-id="${escapeHtml(figure.id)}">Add to ranked wishlist</button>
+      <button class="state-toggle-button" data-action="toggle-wishlist" data-id="${escapeHtml(figure.id)}">Wishlist?</button>
     `;
 
   const appearanceRows = figure.setAppearances
@@ -661,7 +660,6 @@ export function renderDetailPanel(figure, record, session, wishlistCount) {
           <div class="detail-badges">
             ${badge(`Release #${String(figure.catalogOrder).padStart(4, "0")}`, "neutral")}
             ${figure.bricklinkNumber ? badge(`BL ${figure.bricklinkNumber}`, "neutral") : badge("BrickLink number pending", "neutral")}
-            ${owned ? badge("Owned", "owned") : ""}
             ${wishlisted ? badge(`Wishlist #${record.wishlistRank}`, "wishlist") : ""}
           </div>
         </div>
@@ -670,8 +668,8 @@ export function renderDetailPanel(figure, record, session, wishlistCount) {
       <div class="detail-section">
         <div class="detail-section-title">Collection log</div>
         <div class="detail-actions">
-          <button class="primary-button" data-action="toggle-owned" data-id="${escapeHtml(figure.id)}">${owned ? "Remove from collection" : "Mark as owned"}</button>
-          <button class="primary-button secondary" data-action="toggle-wishlist" data-id="${escapeHtml(figure.id)}">${wishlisted ? "Remove from wishlist" : "Add to wishlist"}</button>
+          <button class="state-toggle-button ${owned ? "is-active" : ""}" data-action="toggle-owned" data-id="${escapeHtml(figure.id)}">${owned ? "Owned" : "Owned?"}</button>
+          <button class="state-toggle-button ${wishlisted ? "is-active" : ""}" data-action="toggle-wishlist" data-id="${escapeHtml(figure.id)}">${wishlisted ? "Wishlisted" : "Wishlist?"}</button>
           ${owned ? `<button class="ghost-button" data-action="clear-owned" data-id="${escapeHtml(figure.id)}">Clear log fields</button>` : ""}
         </div>
         <form id="detail-form" data-id="${escapeHtml(figure.id)}" class="detail-form">
