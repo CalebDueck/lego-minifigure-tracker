@@ -3,8 +3,8 @@ import { firebaseConfig } from "./firebase-config.js";
 import { createPersistence } from "./persistence.js";
 import {
   renderShellMarkup,
+  renderSiteAccountControl,
   renderHeaderStats,
-  renderModeBar,
   renderHomeOverview,
   renderAboutOverview,
   renderStageNav,
@@ -19,7 +19,6 @@ import {
   renderAuthOverlay,
 } from "./ui.js";
 
-const CONFIG_PATH = "site/src/firebase-config.js";
 const DISPLAY_MODE_KEY = "sw-holocron-display-mode";
 
 class HolocronApp {
@@ -42,6 +41,7 @@ class HolocronApp {
     this.view = "home";
     this.saveState = "idle";
     this.lastSavedLabel = "";
+    this.accountMenuOpen = false;
     this.imageLightbox = null;
     this.persistence = null;
     this.session = {
@@ -70,6 +70,7 @@ class HolocronApp {
 
     this.unsubscribeSession = this.persistence.onSessionChange((session) => {
       this.session = session;
+      this.accountMenuOpen = false;
       this.connectState();
       this.render();
     });
@@ -97,11 +98,11 @@ class HolocronApp {
     this.root.innerHTML = renderShellMarkup(this.seriesOptions);
     this.refs = {
       shell: this.root.querySelector(".shell"),
+      siteAccount: document.getElementById("site-account"),
       commandDeck: document.getElementById("command-deck"),
       controlBar: document.getElementById("control-bar"),
       workspace: document.getElementById("workspace"),
       headerStats: document.getElementById("header-stats"),
-      modeBar: document.getElementById("mode-bar"),
       filterControlsBlock: document.getElementById("filter-controls-block"),
       layoutControlsBlock: document.getElementById("layout-controls-block"),
       resultNav: document.getElementById("result-nav"),
@@ -109,7 +110,6 @@ class HolocronApp {
       resultSubheading: document.getElementById("result-subheading"),
       displayControls: document.getElementById("display-controls"),
       figureGrid: document.getElementById("figure-grid"),
-      detailOverlay: document.getElementById("detail-overlay"),
       detailPanel: document.getElementById("detail-panel"),
       imageOverlay: document.getElementById("image-overlay"),
       authOverlay: document.getElementById("auth-overlay"),
@@ -153,6 +153,10 @@ class HolocronApp {
   handleClick(event) {
     const actionTarget = event.target.closest("[data-action]");
     if (!actionTarget) {
+      if (this.accountMenuOpen && !event.target.closest(".site-account")) {
+        this.accountMenuOpen = false;
+        this.render();
+      }
       return;
     }
 
@@ -160,12 +164,24 @@ class HolocronApp {
     const id = actionTarget.dataset.id;
 
     if (action === "sign-in") {
+      this.accountMenuOpen = false;
       this.persistence.signIn();
       return;
     }
 
     if (action === "sign-out") {
+      this.accountMenuOpen = false;
       this.persistence.signOut();
+      return;
+    }
+
+    if (this.accountMenuOpen && action !== "toggle-account-menu") {
+      this.accountMenuOpen = false;
+    }
+
+    if (action === "toggle-account-menu") {
+      this.accountMenuOpen = !this.accountMenuOpen;
+      this.render();
       return;
     }
 
@@ -175,6 +191,7 @@ class HolocronApp {
       this.selectedId = null;
       this.detailPanelOpen = false;
       this.imageLightbox = null;
+      this.accountMenuOpen = false;
       this.render();
       return;
     }
@@ -193,6 +210,7 @@ class HolocronApp {
       this.selectedId = null;
       this.detailPanelOpen = false;
       this.imageLightbox = null;
+      this.accountMenuOpen = false;
       this.render();
       return;
     }
@@ -226,6 +244,7 @@ class HolocronApp {
       this.selectedId = null;
       this.detailPanelOpen = false;
       this.imageLightbox = null;
+      this.accountMenuOpen = false;
       this.refs.viewSelect.value = "all";
       this.refs.searchInput.value = "";
       this.refs.seriesFilter.value = "all";
@@ -239,6 +258,7 @@ class HolocronApp {
       this.selectedId = null;
       this.detailPanelOpen = false;
       this.imageLightbox = null;
+      this.accountMenuOpen = false;
       this.render();
       return;
     }
@@ -251,6 +271,7 @@ class HolocronApp {
       this.selectedId = id;
       this.detailPanelOpen = true;
       this.imageLightbox = null;
+      this.accountMenuOpen = false;
       this.render();
       return;
     }
@@ -282,6 +303,7 @@ class HolocronApp {
       this.selectedId = null;
       this.detailPanelOpen = false;
       this.imageLightbox = null;
+      this.accountMenuOpen = false;
       this.render();
       return;
     }
@@ -461,13 +483,13 @@ class HolocronApp {
       : null;
     const selectedRecord = selectedFigure ? this.records[selectedFigure.id] : null;
     const imageOverlay = renderImageOverlay(this.imageLightbox);
-    const authOverlay = renderAuthOverlay(this.session);
+    const authOverlay = renderAuthOverlay(this.session, this.view);
     const detailPanelVisible = !isHomeView && !isAboutView && this.detailPanelOpen && Boolean(selectedFigure);
     const showBrowseControls = !isHomeView && !isAboutView;
     const useDocumentScroll = isHomeView;
 
+    this.refs.siteAccount.innerHTML = renderSiteAccountControl(this.session, this.accountMenuOpen);
     this.refs.headerStats.innerHTML = renderHeaderStats(stats, this.view);
-    this.refs.modeBar.innerHTML = renderModeBar(this.session, this.saveState, this.lastSavedLabel, CONFIG_PATH);
     this.refs.shell.classList.toggle("shell-document-scroll", useDocumentScroll);
     this.refs.commandDeck.classList.toggle("is-hidden", !isHomeView);
     this.refs.controlBar.classList.toggle("is-hidden", !showBrowseControls);
@@ -516,7 +538,7 @@ class HolocronApp {
           : renderDetailPanel(null, null, this.session, stats.wishlistCount);
     }
 
-    this.refs.detailOverlay.classList.toggle("is-hidden", !detailPanelVisible);
+    this.refs.detailPanel.classList.toggle("is-hidden", !detailPanelVisible);
 
     if (this.view === "home" || this.view === "about") {
       this.refs.viewSelect.value = "all";

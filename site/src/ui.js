@@ -65,7 +65,7 @@ export function renderShellMarkup(seriesOptions) {
           <span class="site-kicker">Private collection holocron</span>
           <span class="site-title">Lego: The Complete Star Wars Minifigure Compendium</span>
         </button>
-        <button class="ghost-button compact site-home-button" data-action="set-view" data-view="home" type="button">Home</button>
+        <div id="site-account" class="site-account"></div>
       </header>
 
       <header id="command-deck" class="command-deck panel">
@@ -77,7 +77,6 @@ export function renderShellMarkup(seriesOptions) {
         <div id="header-stats" class="header-stats"></div>
       </header>
 
-      <div id="mode-bar" class="mode-bar"></div>
       <section id="control-bar" class="control-bar panel">
         <div id="filter-controls-block" class="control-group">
           <div class="rail-title">Filters</div>
@@ -140,9 +139,7 @@ export function renderShellMarkup(seriesOptions) {
         </section>
       </main>
 
-      <div id="detail-overlay" class="detail-overlay is-hidden">
-        <aside id="detail-panel" class="detail-panel panel"></aside>
-      </div>
+      <aside id="detail-panel" class="detail-panel panel is-hidden"></aside>
       <div id="image-overlay" class="image-overlay is-hidden"></div>
       <div id="auth-overlay" class="auth-overlay is-hidden"></div>
     </div>
@@ -242,31 +239,43 @@ export function renderHeaderStats(stats, view) {
   `;
 }
 
-export function renderModeBar(session, saveState, lastSavedLabel, configPath) {
-  const saveLabelMap = {
-    idle: "Standing by",
-    saving: "Saving holocron state...",
-    saved: lastSavedLabel ? `Saved ${lastSavedLabel}` : "Saved",
-    error: "Save failed",
-  };
+export function renderSiteAccountControl(session, accountMenuOpen) {
+  if (session.mode !== "firebase") {
+    return `
+      <div class="account-pill" aria-label="Local mode">
+        <span class="account-pill-label">Local mode</span>
+      </div>
+    `;
+  }
 
-  const modeLabel = session.mode === "firebase" ? "Cloud sync" : "Local device mode";
-  const authLabel = session.mode === "firebase" && session.user
-    ? `Signed in as ${escapeHtml(session.user.displayName || session.user.email)}`
-    : session.mode === "firebase"
-      ? "Google sign-in required"
-      : `Edit ${escapeHtml(configPath)} when Firebase is ready`;
+  if (!session.user) {
+    return `<button class="ghost-button compact account-trigger" data-action="sign-in" type="button">Log in</button>`;
+  }
+
+  const displayName = session.user.displayName || session.user.email || "Signed in";
+  const showEmail = Boolean(session.user.email && session.user.email !== displayName);
 
   return `
-    <div class="mode-cluster">
-      <span class="mode-pill">${escapeHtml(modeLabel)}</span>
-      <span class="mode-copy">${authLabel}</span>
-    </div>
-    <div class="mode-cluster mode-right">
-      <span class="save-state save-${saveState}">${escapeHtml(saveLabelMap[saveState] || "Standing by")}</span>
-      ${session.mode === "firebase" && session.user
-        ? `<button class="ghost-button compact" data-action="sign-out">Sign out</button>`
-        : ""}
+    <div class="account-menu${accountMenuOpen ? " is-open" : ""}">
+      <button
+        class="ghost-button compact account-trigger"
+        data-action="toggle-account-menu"
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded="${accountMenuOpen ? "true" : "false"}"
+      >
+        <span class="account-trigger-name">${escapeHtml(displayName)}</span>
+        <span class="account-caret" aria-hidden="true">▾</span>
+      </button>
+      ${accountMenuOpen ? `
+        <div class="account-dropdown" role="menu">
+          <div class="account-dropdown-copy">
+            <strong>${escapeHtml(displayName)}</strong>
+            ${showEmail ? `<span>${escapeHtml(session.user.email)}</span>` : ""}
+          </div>
+          <button class="ghost-button compact account-dropdown-button" data-action="sign-out" type="button" role="menuitem">Log out</button>
+        </div>
+      ` : ""}
     </div>
   `;
 }
@@ -659,6 +668,7 @@ export function renderDetailPanel(figure, record, session, wishlistCount) {
       <div class="detail-section-title">Collection log</div>
       <div class="detail-actions">
         <button class="primary-button" data-action="toggle-owned" data-id="${escapeHtml(figure.id)}">${owned ? "Remove from collection" : "Mark as owned"}</button>
+        <button class="primary-button secondary" data-action="toggle-wishlist" data-id="${escapeHtml(figure.id)}">${wishlisted ? "Remove from wishlist" : "Add to wishlist"}</button>
         ${owned ? `<button class="ghost-button" data-action="clear-owned" data-id="${escapeHtml(figure.id)}">Clear log fields</button>` : ""}
       </div>
       <form id="detail-form" data-id="${escapeHtml(figure.id)}" class="detail-form">
@@ -767,8 +777,12 @@ export function renderImageOverlay(lightbox) {
   };
 }
 
-export function renderAuthOverlay(session) {
+export function renderAuthOverlay(session, view) {
   if (session.mode !== "firebase") {
+    return { hidden: true, markup: "" };
+  }
+
+  if (!session.user && (view === "home" || view === "about")) {
     return { hidden: true, markup: "" };
   }
 
