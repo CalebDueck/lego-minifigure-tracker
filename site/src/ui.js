@@ -23,6 +23,10 @@ function brickLinkUrl(figure) {
   return `https://www.bricklink.com/v2/search.page?q=${encodeURIComponent(figure.name)}`;
 }
 
+function brickLinkSetUrl(appearance) {
+  return `https://www.bricklink.com/v2/catalog/catalogitem.page?S=${encodeURIComponent(appearance.set_num)}`;
+}
+
 function initials(value) {
   return String(value || "")
     .split(/\s+/)
@@ -619,7 +623,7 @@ export function renderDetailPanel(figure, record, session, wishlistCount) {
     .map((appearance) => `
       <li>
         <strong>${escapeHtml(appearance.set_num)}</strong>
-        <span>${escapeHtml(appearance.name)} · ${escapeHtml(appearance.year)}</span>
+        <span><a class="appearance-link" href="${escapeHtml(brickLinkSetUrl(appearance))}" target="_blank" rel="noreferrer">${escapeHtml(appearance.name)}</a> · ${escapeHtml(appearance.year)}</span>
       </li>
     `)
     .join("");

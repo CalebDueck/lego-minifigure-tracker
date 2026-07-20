@@ -675,7 +675,8 @@ a {
 .figure-grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(210px, 240px));
+  justify-content: start;
 }
 
 .figure-grid.figure-grid-holotable {
@@ -1023,7 +1024,8 @@ a {
 .holotable-grid {
   display: grid;
   gap: 1rem 0.8rem;
-  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(92px, 112px));
+  justify-content: start;
   align-items: start;
 }
 
@@ -1527,7 +1529,7 @@ a {
   }
 
   .figure-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(160px, 188px));
   }
 
   .character-directory-grid {
@@ -1535,7 +1537,7 @@ a {
   }
 
   .holotable-grid {
-    grid-template-columns: repeat(auto-fit, minmax(74px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(74px, 88px));
     gap: 0.95rem 0.7rem;
   }
 
