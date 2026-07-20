@@ -38,10 +38,29 @@ function formatSeriesOptions(seriesOptions) {
     .join("");
 }
 
+function formatTimestamp(value) {
+  if (!value) {
+    return "Unknown";
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return String(value);
+  }
+
+  return parsed.toLocaleString([], {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export function renderShellMarkup(seriesOptions) {
   return `
     <div class="shell">
-      <header class="command-deck panel">
+      <header id="command-deck" class="command-deck panel">
         <div class="brand-copy">
           <div class="eyebrow">Private collection control room</div>
           <h1>Star Wars Minifigure Holocron</h1>
@@ -51,49 +70,52 @@ export function renderShellMarkup(seriesOptions) {
       </header>
 
       <div id="mode-bar" class="mode-bar"></div>
+      <section class="control-bar panel">
+        <div class="control-group">
+          <div class="rail-title">Views</div>
+          <div class="view-tabs top-tabs">
+            <button class="view-tab is-active" id="tab-home" data-action="set-view" data-view="home">
+              <span>Home</span>
+            </button>
+            <button class="view-tab" id="tab-all" data-action="set-view" data-view="all">
+              <span>All Figures</span>
+              <strong id="count-all">0</strong>
+            </button>
+            <button class="view-tab" id="tab-owned" data-action="set-view" data-view="owned">
+              <span>Owned</span>
+              <strong id="count-owned">0</strong>
+            </button>
+            <button class="view-tab" id="tab-not-owned" data-action="set-view" data-view="not-owned">
+              <span>Not Owned</span>
+              <strong id="count-not-owned">0</strong>
+            </button>
+            <button class="view-tab" id="tab-wishlist" data-action="set-view" data-view="wishlist">
+              <span>Wishlist</span>
+              <strong id="count-wishlist">0</strong>
+            </button>
+            <button class="view-tab" id="tab-characters" data-action="set-view" data-view="characters">
+              <span>Unique Characters</span>
+              <strong id="count-characters">0</strong>
+            </button>
+          </div>
+        </div>
 
-      <main id="workspace" class="workspace">
-        <aside class="left-rail panel">
-          <section class="rail-block">
-            <div class="rail-title">Views</div>
-            <div class="view-tabs">
-              <button class="view-tab is-active" id="tab-all" data-action="set-view" data-view="all">
-                <span>All Figures</span>
-                <strong id="count-all">0</strong>
-              </button>
-              <button class="view-tab" id="tab-owned" data-action="set-view" data-view="owned">
-                <span>Owned</span>
-                <strong id="count-owned">0</strong>
-              </button>
-              <button class="view-tab" id="tab-not-owned" data-action="set-view" data-view="not-owned">
-                <span>Not Owned</span>
-                <strong id="count-not-owned">0</strong>
-              </button>
-              <button class="view-tab" id="tab-wishlist" data-action="set-view" data-view="wishlist">
-                <span>Wishlist</span>
-                <strong id="count-wishlist">0</strong>
-              </button>
-              <button class="view-tab" id="tab-characters" data-action="set-view" data-view="characters">
-                <span>Unique Characters</span>
-                <strong id="count-characters">0</strong>
-              </button>
-            </div>
-          </section>
-
-          <section class="rail-block">
-            <div class="rail-title">Scan Filters</div>
-            <label class="field">
+        <div id="filter-controls-block" class="control-group">
+          <div class="rail-title">Scan Filters</div>
+          <div class="filter-toolbar">
+            <button class="ghost-button compact filter-clear-button" data-action="clear-filters">Clear filters</button>
+            <label class="inline-field">
               <span>Search</span>
               <input id="search-input" type="search" placeholder="Luke, clone, fig-003..." autocomplete="off">
             </label>
-            <label class="field">
+            <label class="inline-field">
               <span>Film / series</span>
               <select id="series-filter">
                 <option value="all">All stories</option>
                 ${formatSeriesOptions(seriesOptions)}
               </select>
             </label>
-            <label class="field">
+            <label class="inline-field">
               <span>Sort</span>
               <select id="sort-filter">
                 <option value="bricklink">BrickLink / release order</option>
@@ -103,23 +125,21 @@ export function renderShellMarkup(seriesOptions) {
                 <option value="character">Character</option>
               </select>
             </label>
-            <button class="ghost-button" data-action="clear-filters">Clear scan</button>
-          </section>
+          </div>
+        </div>
 
-          <section class="rail-block rail-display-block">
-            <div class="rail-title">Layout</div>
-            <div id="display-controls" class="display-controls"></div>
-            <div class="rail-legend">
-              ${badge("Owned", "owned")}
-              ${badge("Wishlist", "wishlist")}
-              ${badge("Needs upgrade", "warning")}
-            </div>
-          </section>
+        <div id="layout-controls-block" class="control-group control-group-layout">
+          <div class="rail-title">Layout</div>
+          <div id="display-controls" class="display-controls"></div>
+          <div class="rail-legend">
+            ${badge("Owned", "owned")}
+            ${badge("Wishlist", "wishlist")}
+            ${badge("Needs upgrade", "warning")}
+          </div>
+        </div>
+      </section>
 
-          <section id="left-stats" class="rail-block"></section>
-          <section id="catalog-meta" class="rail-block rail-meta"></section>
-        </aside>
-
+      <main id="workspace" class="workspace">
         <section class="roster-stage panel">
           <div class="stage-top">
             <div class="stage-copy">
@@ -130,11 +150,70 @@ export function renderShellMarkup(seriesOptions) {
           </div>
           <div id="figure-grid" class="figure-grid"></div>
         </section>
-
-        <aside id="detail-panel" class="detail-panel panel"></aside>
       </main>
 
+      <div id="detail-overlay" class="detail-overlay is-hidden">
+        <aside id="detail-panel" class="detail-panel panel"></aside>
+      </div>
+      <div id="image-overlay" class="image-overlay is-hidden"></div>
       <div id="auth-overlay" class="auth-overlay is-hidden"></div>
+    </div>
+  `;
+}
+
+function renderHomeLaunchCard(view, label, count, copy) {
+  return `
+    <button class="home-launch-card" data-action="set-view" data-view="${escapeHtml(view)}" type="button">
+      <span class="home-launch-label">${escapeHtml(label)}</span>
+      <strong class="home-launch-count">${escapeHtml(count)}</strong>
+      <span class="home-launch-copy">${escapeHtml(copy)}</span>
+    </button>
+  `;
+}
+
+export function renderHomeOverview(stats, uniqueCharacterCount) {
+  return `
+    <div class="home-overview">
+      <div class="eyebrow">Launch a view</div>
+      <div class="home-launch-grid">
+        ${renderHomeLaunchCard("all", "All Figures", stats.total, "Browse the full Star Wars catalog")}
+        ${renderHomeLaunchCard("owned", "Owned", stats.ownedCount, "Jump straight into logged figures")}
+        ${renderHomeLaunchCard("not-owned", "Not Owned", stats.notOwnedCount, "Focus on the missing roster")}
+        ${renderHomeLaunchCard("wishlist", "Wishlist", stats.wishlistCount, "Review your ranked targets")}
+        ${renderHomeLaunchCard("characters", "Unique Characters", uniqueCharacterCount, "Browse by character grouping")}
+        ${renderHomeLaunchCard("about", "About", "Info", "See catalog sources and last update time")}
+      </div>
+    </div>
+  `;
+}
+
+export function renderAboutOverview(meta) {
+  const mappedCount = Number(meta.bricklinkMappedCount || 0);
+  const coverage = Number(meta.bricklinkCoveragePercent || 0);
+  const bricksetFetchedAt = meta.bricksetSeries?.fetchedAt ? formatTimestamp(meta.bricksetSeries.fetchedAt) : null;
+
+  return `
+    <div class="about-overview">
+      <div class="about-panel">
+        <div class="eyebrow">Catalog feed</div>
+        <h2>Data sources</h2>
+        <p>The catalog is generated locally and committed into the site data so browsing stays fast.</p>
+        <ul class="about-meta-list">
+          <li><strong>Last updated</strong><span>${escapeHtml(formatTimestamp(meta.generatedAt))}</span></li>
+          <li><strong>Figures indexed</strong><span>${escapeHtml(meta.figureCount || 0)}</span></li>
+          <li><strong>Star Wars sets scanned</strong><span>${escapeHtml(meta.setCount || 0)}</span></li>
+          <li><strong>Source</strong><span>${escapeHtml(meta.source || "Rebrickable bulk data")}</span></li>
+          <li><strong>BrickLink IDs linked</strong><span>${escapeHtml(mappedCount)} (${escapeHtml(coverage)}% coverage)</span></li>
+          ${bricksetFetchedAt ? `<li><strong>Brickset cache fetched</strong><span>${escapeHtml(bricksetFetchedAt)}</span></li>` : ""}
+        </ul>
+      </div>
+      <div class="about-panel">
+        <div class="eyebrow">Build notes</div>
+        <h2>How the catalog is assembled</h2>
+        <ul class="about-notes-list">
+          ${(meta.notes || []).map((note) => `<li>${escapeHtml(note)}</li>`).join("")}
+        </ul>
+      </div>
     </div>
   `;
 }
@@ -226,32 +305,26 @@ export function renderLeftStats(stats) {
   `;
 }
 
-export function renderCatalogMeta(meta) {
-  const mappedCount = Number(meta.bricklinkMappedCount || 0);
-  const coverage = Number(meta.bricklinkCoveragePercent || 0);
-
-  return `
-    <div class="rail-title">Catalog Feed</div>
-    <ul class="meta-list">
-      <li>${escapeHtml(meta.figureCount || 0)} figures indexed</li>
-      <li>${escapeHtml(meta.setCount || 0)} Star Wars sets scanned</li>
-      <li>Source: ${escapeHtml(meta.source || "Rebrickable bulk data")}</li>
-      <li>${escapeHtml(mappedCount)} BrickLink IDs linked (${escapeHtml(coverage)}% coverage)</li>
-    </ul>
-  `;
-}
-
-export function renderStageNav(characterFocus) {
-  if (!characterFocus) {
-    return "";
+export function renderStageNav(view, characterFocus) {
+  if (characterFocus) {
+    return `
+      <button class="ghost-button compact stage-back-button" data-action="open-character-directory" type="button">
+        <span class="stage-back-glyph" aria-hidden="true">&lt;</span>
+        <span>Back to Unique Characters</span>
+      </button>
+    `;
   }
 
-  return `
-    <button class="ghost-button compact stage-back-button" data-action="open-character-directory" type="button">
-      <span class="stage-back-glyph" aria-hidden="true">&lt;</span>
-      <span>Back to Unique Characters</span>
-    </button>
-  `;
+  if (view === "about") {
+    return `
+      <button class="ghost-button compact stage-back-button" data-action="set-view" data-view="home" type="button">
+        <span class="stage-back-glyph" aria-hidden="true">&lt;</span>
+        <span>Back to Home</span>
+      </button>
+    `;
+  }
+
+  return "";
 }
 
 export function renderDisplayModeControls(figureDisplayMode, showingCharacterDirectory) {
@@ -277,6 +350,12 @@ export function renderDisplayModeControls(figureDisplayMode, showingCharacterDir
 }
 
 export function renderResultHeading(view, count, options = {}) {
+  if (view === "home") {
+    return "Collection command hub";
+  }
+  if (view === "about") {
+    return "About this tracker";
+  }
   if (options.showingCharacterDirectory) {
     return `${count} unique characters`;
   }
@@ -299,6 +378,14 @@ export function renderResultHeading(view, count, options = {}) {
 }
 
 export function renderResultSubheading(filters, view, showingCharacterDirectory, figureDisplayMode, characterFocus) {
+  if (view === "home") {
+    return "Choose a collection view to begin browsing the holocron.";
+  }
+
+  if (view === "about") {
+    return "Catalog sources, coverage notes, and the most recent data refresh.";
+  }
+
   const parts = [];
   if (characterFocus) {
     parts.push(`focused on ${characterFocus}`);
@@ -510,8 +597,8 @@ export function renderDetailPanel(figure, record, session, wishlistCount) {
     return `
       <div class="detail-empty">
         <div class="eyebrow">Holocron node</div>
-        <h2>Select a figure card</h2>
-        <p>The right panel becomes your collection log, wishlist editor, and appearance reference.</p>
+        <h2>Select a figure</h2>
+        <p>Open a figure to inspect the catalog record, update your collection log, and manage wishlist notes.</p>
       </div>
     `;
   }
@@ -544,11 +631,30 @@ export function renderDetailPanel(figure, record, session, wishlistCount) {
 
   return `
     <div class="detail-panel-topbar">
-      <button class="ghost-button compact" data-action="toggle-detail-panel" type="button">Dismiss panel</button>
+      <button class="ghost-button compact" data-action="toggle-detail-panel" type="button">Close details</button>
     </div>
     <div class="detail-head">
-      <div class="detail-portrait">
-        <img src="${escapeHtml(figure.imageUrl)}" alt="${escapeHtml(figure.name)}">
+      <div class="detail-portrait-shell">
+        <button
+          class="detail-portrait detail-portrait-button"
+          data-action="open-image-lightbox"
+          data-image-src="${escapeHtml(figure.imageUrl)}"
+          data-image-alt="${escapeHtml(figure.name)}"
+          data-image-title="${escapeHtml(figure.character)}"
+          type="button"
+        >
+          <img src="${escapeHtml(figure.imageUrl)}" alt="${escapeHtml(figure.name)}">
+        </button>
+        <button
+          class="ghost-button compact detail-zoom-button"
+          data-action="open-image-lightbox"
+          data-image-src="${escapeHtml(figure.imageUrl)}"
+          data-image-alt="${escapeHtml(figure.name)}"
+          data-image-title="${escapeHtml(figure.character)}"
+          type="button"
+        >
+          Full screen image
+        </button>
       </div>
       <div class="detail-copy">
         <div class="eyebrow">${escapeHtml(figure.movieSeries)}</div>
@@ -647,6 +753,32 @@ function renderConditionOptions(selected) {
       return `<option value="${escapeHtml(option)}" ${isSelected}>${escapeHtml(label)}</option>`;
     })
     .join("");
+}
+
+export function renderImageOverlay(lightbox) {
+  if (!lightbox) {
+    return { hidden: true, markup: "" };
+  }
+
+  return {
+    hidden: false,
+    markup: `
+      <div class="image-overlay-backdrop" data-action="close-image-lightbox"></div>
+      <div class="overlay-card image-overlay-card" role="dialog" aria-modal="true" aria-label="${escapeHtml(lightbox.alt)}">
+        <div class="image-overlay-topbar">
+          <div class="image-overlay-copy">
+            <div class="eyebrow">Detail image</div>
+            <h2>${escapeHtml(lightbox.title || lightbox.alt)}</h2>
+          </div>
+          <button class="ghost-button compact" data-action="close-image-lightbox" type="button">Close</button>
+        </div>
+        <div class="image-overlay-frame">
+          <img src="${escapeHtml(lightbox.src)}" alt="${escapeHtml(lightbox.alt)}">
+        </div>
+        <p class="image-overlay-caption">${escapeHtml(lightbox.alt)}</p>
+      </div>
+    `,
+  };
 }
 
 export function renderAuthOverlay(session) {
