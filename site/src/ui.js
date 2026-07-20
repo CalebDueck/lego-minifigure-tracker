@@ -637,109 +637,111 @@ export function renderDetailPanel(figure, record, session, wishlistCount) {
     .join("");
 
   return `
-    <div class="detail-panel-topbar">
-      <button class="ghost-button compact" data-action="toggle-detail-panel" type="button">Close details</button>
-    </div>
-    <div class="detail-head">
-      <div class="detail-portrait-shell">
-        <button
-          class="detail-portrait detail-portrait-button"
-          data-action="open-image-lightbox"
-          data-image-src="${escapeHtml(figure.imageUrl)}"
-          data-image-alt="${escapeHtml(figure.name)}"
-          data-image-title="${escapeHtml(figure.character)}"
-          type="button"
-        >
-          <img src="${escapeHtml(figure.imageUrl)}" alt="${escapeHtml(figure.name)}">
-        </button>
-        <button
-          class="ghost-button compact detail-zoom-button"
-          data-action="open-image-lightbox"
-          data-image-src="${escapeHtml(figure.imageUrl)}"
-          data-image-alt="${escapeHtml(figure.name)}"
-          data-image-title="${escapeHtml(figure.character)}"
-          type="button"
-        >
-          Full screen image
-        </button>
-      </div>
-      <div class="detail-copy">
-        <div class="eyebrow">${escapeHtml(figure.movieSeries)}</div>
-        <h2>${escapeHtml(figure.character)}</h2>
-        <p>${escapeHtml(figure.name)}</p>
-        <div class="detail-badges">
-          ${badge(`Release #${String(figure.catalogOrder).padStart(4, "0")}`, "neutral")}
-          ${figure.bricklinkNumber ? badge(`BL ${figure.bricklinkNumber}`, "neutral") : badge("BrickLink number pending", "neutral")}
-          ${owned ? badge("Owned", "owned") : ""}
-          ${wishlisted ? badge(`Wishlist #${record.wishlistRank}`, "wishlist") : ""}
+    <button class="detail-dismiss-handle" data-action="toggle-detail-panel" type="button" aria-label="Dismiss details">
+      <span aria-hidden="true">&gt;</span>
+    </button>
+    <div class="detail-panel-body">
+      <div class="detail-head">
+        <div class="detail-portrait-shell">
+          <button
+            class="detail-portrait detail-portrait-button"
+            data-action="open-image-lightbox"
+            data-image-src="${escapeHtml(figure.imageUrl)}"
+            data-image-alt="${escapeHtml(figure.name)}"
+            data-image-title="${escapeHtml(figure.character)}"
+            type="button"
+          >
+            <img src="${escapeHtml(figure.imageUrl)}" alt="${escapeHtml(figure.name)}">
+          </button>
+          <button
+            class="ghost-button compact detail-zoom-button"
+            data-action="open-image-lightbox"
+            data-image-src="${escapeHtml(figure.imageUrl)}"
+            data-image-alt="${escapeHtml(figure.name)}"
+            data-image-title="${escapeHtml(figure.character)}"
+            type="button"
+          >
+            Full screen image
+          </button>
+        </div>
+        <div class="detail-copy">
+          <div class="eyebrow">${escapeHtml(figure.movieSeries)}</div>
+          <h2>${escapeHtml(figure.character)}</h2>
+          <p>${escapeHtml(figure.name)}</p>
+          <div class="detail-badges">
+            ${badge(`Release #${String(figure.catalogOrder).padStart(4, "0")}`, "neutral")}
+            ${figure.bricklinkNumber ? badge(`BL ${figure.bricklinkNumber}`, "neutral") : badge("BrickLink number pending", "neutral")}
+            ${owned ? badge("Owned", "owned") : ""}
+            ${wishlisted ? badge(`Wishlist #${record.wishlistRank}`, "wishlist") : ""}
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="detail-section">
-      <div class="detail-section-title">Collection log</div>
-      <div class="detail-actions">
-        <button class="primary-button" data-action="toggle-owned" data-id="${escapeHtml(figure.id)}">${owned ? "Remove from collection" : "Mark as owned"}</button>
-        <button class="primary-button secondary" data-action="toggle-wishlist" data-id="${escapeHtml(figure.id)}">${wishlisted ? "Remove from wishlist" : "Add to wishlist"}</button>
-        ${owned ? `<button class="ghost-button" data-action="clear-owned" data-id="${escapeHtml(figure.id)}">Clear log fields</button>` : ""}
-      </div>
-      <form id="detail-form" data-id="${escapeHtml(figure.id)}" class="detail-form">
-        <div class="form-grid">
-          <label class="field">
-            <span>Quantity</span>
-            <input type="number" name="quantity" min="1" value="${owned ? escapeHtml(record.quantity || 1) : "1"}">
-          </label>
-          <label class="field">
-            <span>Condition</span>
-            <select name="condition">
-              ${renderConditionOptions(record?.condition || "")}
-            </select>
-          </label>
+      <div class="detail-section">
+        <div class="detail-section-title">Collection log</div>
+        <div class="detail-actions">
+          <button class="primary-button" data-action="toggle-owned" data-id="${escapeHtml(figure.id)}">${owned ? "Remove from collection" : "Mark as owned"}</button>
+          <button class="primary-button secondary" data-action="toggle-wishlist" data-id="${escapeHtml(figure.id)}">${wishlisted ? "Remove from wishlist" : "Add to wishlist"}</button>
+          ${owned ? `<button class="ghost-button" data-action="clear-owned" data-id="${escapeHtml(figure.id)}">Clear log fields</button>` : ""}
         </div>
-        <label class="field">
-          <span>How you got it</span>
-          <input type="text" name="acquiredFrom" value="${escapeHtml(record?.acquiredFrom || "")}" placeholder="Cloud City set, polybag, BrickLink lot...">
-        </label>
-        <label class="checkbox-row">
-          <input type="checkbox" name="needsUpgrade" ${record?.needsUpgrade ? "checked" : ""}>
-          <span>Needs condition upgrade</span>
-        </label>
-        <label class="field">
-          <span>Collection notes</span>
-          <textarea name="notes" rows="4" placeholder="Missing cape, torso crack, display-only copy...">${escapeHtml(record?.notes || "")}</textarea>
-        </label>
-        <label class="field">
-          <span>Wishlist notes</span>
-          <textarea name="wishlistNotes" rows="3" placeholder="Reason for priority, target set, upgrade notes..." ${wishlisted ? "" : "disabled"}>${escapeHtml(record?.wishlistNotes || "")}</textarea>
-        </label>
-        <button class="primary-button submit-button" type="submit">Save collection log</button>
-      </form>
-    </div>
-
-    <div class="detail-section">
-      <div class="detail-section-title">Wishlist ranking</div>
-      ${wishlistStatus}
-    </div>
-
-    <div class="detail-section">
-      <div class="detail-section-title">Catalog data</div>
-      <ul class="catalog-facts">
-        <li><strong>Rebrickable ID</strong><span>${escapeHtml(figure.rebrickableId)}</span></li>
-        <li><strong>First appearance</strong><span>${escapeHtml(figure.firstAppearanceSet)} · ${escapeHtml(figure.firstAppearanceSetName)}</span></li>
-        <li><strong>Appears in</strong><span>${escapeHtml(figure.appearanceCount)} tracked sets</span></li>
-        <li><strong>Source types</strong><span>${escapeHtml(figure.sourceKinds.join(", "))}</span></li>
-      </ul>
-      <div class="detail-links">
-        <a class="external-link" href="${escapeHtml(figure.rebrickableUrl)}" target="_blank" rel="noreferrer">Open Rebrickable entry</a>
-        <a class="external-link" href="${escapeHtml(brickLinkUrl(figure))}" target="_blank" rel="noreferrer">Open BrickLink entry</a>
+        <form id="detail-form" data-id="${escapeHtml(figure.id)}" class="detail-form">
+          <div class="form-grid">
+            <label class="field">
+              <span>Quantity</span>
+              <input type="number" name="quantity" min="1" value="${owned ? escapeHtml(record.quantity || 1) : "1"}">
+            </label>
+            <label class="field">
+              <span>Condition</span>
+              <select name="condition">
+                ${renderConditionOptions(record?.condition || "")}
+              </select>
+            </label>
+          </div>
+          <label class="field">
+            <span>How you got it</span>
+            <input type="text" name="acquiredFrom" value="${escapeHtml(record?.acquiredFrom || "")}" placeholder="Cloud City set, polybag, BrickLink lot...">
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" name="needsUpgrade" ${record?.needsUpgrade ? "checked" : ""}>
+            <span>Needs condition upgrade</span>
+          </label>
+          <label class="field">
+            <span>Collection notes</span>
+            <textarea name="notes" rows="4" placeholder="Missing cape, torso crack, display-only copy...">${escapeHtml(record?.notes || "")}</textarea>
+          </label>
+          <label class="field">
+            <span>Wishlist notes</span>
+            <textarea name="wishlistNotes" rows="3" placeholder="Reason for priority, target set, upgrade notes..." ${wishlisted ? "" : "disabled"}>${escapeHtml(record?.wishlistNotes || "")}</textarea>
+          </label>
+          <button class="primary-button submit-button" type="submit">Save collection log</button>
+        </form>
       </div>
-    </div>
 
-    <div class="detail-section">
-      <div class="detail-section-title">Known appearances</div>
-      <ul class="appearance-list">
-        ${appearanceRows}
-      </ul>
+      <div class="detail-section">
+        <div class="detail-section-title">Wishlist ranking</div>
+        ${wishlistStatus}
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">Catalog data</div>
+        <ul class="catalog-facts">
+          <li><strong>Rebrickable ID</strong><span>${escapeHtml(figure.rebrickableId)}</span></li>
+          <li><strong>First appearance</strong><span>${escapeHtml(figure.firstAppearanceSet)} · ${escapeHtml(figure.firstAppearanceSetName)}</span></li>
+          <li><strong>Appears in</strong><span>${escapeHtml(figure.appearanceCount)} tracked sets</span></li>
+          <li><strong>Source types</strong><span>${escapeHtml(figure.sourceKinds.join(", "))}</span></li>
+        </ul>
+        <div class="detail-links">
+          <a class="external-link" href="${escapeHtml(figure.rebrickableUrl)}" target="_blank" rel="noreferrer">Open Rebrickable entry</a>
+          <a class="external-link" href="${escapeHtml(brickLinkUrl(figure))}" target="_blank" rel="noreferrer">Open BrickLink entry</a>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">Known appearances</div>
+        <ul class="appearance-list">
+          ${appearanceRows}
+        </ul>
+      </div>
     </div>
   `;
 }
