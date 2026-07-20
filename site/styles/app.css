@@ -149,6 +149,8 @@ a {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.95rem 1.2rem;
+  overflow: visible;
+  z-index: 18;
 }
 
 .site-title-link {
