@@ -60,44 +60,37 @@ function formatTimestamp(value) {
 export function renderShellMarkup(seriesOptions) {
   return `
     <div class="shell">
+      <header class="site-bar panel">
+        <button class="site-title-link" data-action="set-view" data-view="home" type="button">
+          <span class="site-kicker">Private collection holocron</span>
+          <span class="site-title">Lego: The Complete Star Wars Minifigure Compendium</span>
+        </button>
+        <button class="ghost-button compact site-home-button" data-action="set-view" data-view="home" type="button">Home</button>
+      </header>
+
       <header id="command-deck" class="command-deck panel">
         <div class="brand-copy">
           <div class="eyebrow">Private collection control room</div>
-          <h1>Star Wars Minifigure Holocron</h1>
+          <h1>Lego: The Complete Star Wars Minifigure Compendium</h1>
           <p>Track the full roster, log your collection, and manage a ranked wishlist in a TCS-inspired command deck.</p>
         </div>
         <div id="header-stats" class="header-stats"></div>
       </header>
 
       <div id="mode-bar" class="mode-bar"></div>
-      <section class="control-bar panel">
-        <div class="control-group">
+      <section id="control-bar" class="control-bar panel">
+        <div id="view-controls-block" class="control-group">
           <div class="rail-title">Views</div>
-          <div class="view-tabs top-tabs">
-            <button class="view-tab is-active" id="tab-home" data-action="set-view" data-view="home">
-              <span>Home</span>
-            </button>
-            <button class="view-tab" id="tab-all" data-action="set-view" data-view="all">
-              <span>All Figures</span>
-              <strong id="count-all">0</strong>
-            </button>
-            <button class="view-tab" id="tab-owned" data-action="set-view" data-view="owned">
-              <span>Owned</span>
-              <strong id="count-owned">0</strong>
-            </button>
-            <button class="view-tab" id="tab-not-owned" data-action="set-view" data-view="not-owned">
-              <span>Not Owned</span>
-              <strong id="count-not-owned">0</strong>
-            </button>
-            <button class="view-tab" id="tab-wishlist" data-action="set-view" data-view="wishlist">
-              <span>Wishlist</span>
-              <strong id="count-wishlist">0</strong>
-            </button>
-            <button class="view-tab" id="tab-characters" data-action="set-view" data-view="characters">
-              <span>Unique Characters</span>
-              <strong id="count-characters">0</strong>
-            </button>
-          </div>
+          <label class="inline-field inline-field-view">
+            <span>Active view</span>
+            <select id="view-select">
+              <option value="all">All Figures</option>
+              <option value="owned">Owned</option>
+              <option value="not-owned">Not Owned</option>
+              <option value="wishlist">Wishlist</option>
+              <option value="characters">Unique Characters</option>
+            </select>
+          </label>
         </div>
 
         <div id="filter-controls-block" class="control-group">
@@ -329,21 +322,22 @@ export function renderStageNav(view, characterFocus) {
 
 export function renderDisplayModeControls(figureDisplayMode, showingCharacterDirectory) {
   return `
-    <div class="display-mode-shell" role="group" aria-label="Display mode">
-      <span class="display-mode-label">Display mode</span>
+    <div class="display-mode-shell" role="group" aria-label="Layout mode">
       <button
         class="display-mode-button${!showingCharacterDirectory && figureDisplayMode === "cards" ? " is-active" : ""}"
         data-action="set-display-mode"
         data-display-mode="cards"
+        type="button"
       >
-        Intel cards
+        Info
       </button>
       <button
         class="display-mode-button${!showingCharacterDirectory && figureDisplayMode === "holotable" ? " is-active" : ""}"
         data-action="set-display-mode"
         data-display-mode="holotable"
+        type="button"
       >
-        TCS head wall
+        Heads
       </button>
     </div>
   `;

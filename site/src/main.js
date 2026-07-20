@@ -97,9 +97,11 @@ class HolocronApp {
     this.root.innerHTML = renderShellMarkup(this.seriesOptions);
     this.refs = {
       commandDeck: document.getElementById("command-deck"),
+      controlBar: document.getElementById("control-bar"),
       workspace: document.getElementById("workspace"),
       headerStats: document.getElementById("header-stats"),
       modeBar: document.getElementById("mode-bar"),
+      viewControlsBlock: document.getElementById("view-controls-block"),
       filterControlsBlock: document.getElementById("filter-controls-block"),
       layoutControlsBlock: document.getElementById("layout-controls-block"),
       resultNav: document.getElementById("result-nav"),
@@ -111,22 +113,13 @@ class HolocronApp {
       detailPanel: document.getElementById("detail-panel"),
       imageOverlay: document.getElementById("image-overlay"),
       authOverlay: document.getElementById("auth-overlay"),
+      viewSelect: document.getElementById("view-select"),
       searchInput: document.getElementById("search-input"),
       seriesFilter: document.getElementById("series-filter"),
       sortFilter: document.getElementById("sort-filter"),
-      tabHome: document.getElementById("tab-home"),
-      tabAll: document.getElementById("tab-all"),
-      tabOwned: document.getElementById("tab-owned"),
-      tabNotOwned: document.getElementById("tab-not-owned"),
-      tabWishlist: document.getElementById("tab-wishlist"),
-      tabCharacters: document.getElementById("tab-characters"),
-      countAll: document.getElementById("count-all"),
-      countOwned: document.getElementById("count-owned"),
-      countNotOwned: document.getElementById("count-not-owned"),
-      countWishlist: document.getElementById("count-wishlist"),
-      countCharacters: document.getElementById("count-characters"),
     };
 
+    this.refs.viewSelect.value = this.view === "home" || this.view === "about" ? "all" : this.view;
     this.refs.searchInput.value = this.filters.search;
     this.refs.seriesFilter.value = this.filters.series;
     this.refs.sortFilter.value = this.filters.sort;
@@ -280,6 +273,16 @@ class HolocronApp {
   }
 
   handleInput(event) {
+    if (event.target === this.refs.viewSelect) {
+      this.view = event.target.value || "all";
+      this.characterFocus = null;
+      this.selectedId = null;
+      this.detailPanelOpen = false;
+      this.imageLightbox = null;
+      this.render();
+      return;
+    }
+
     if (event.target === this.refs.searchInput) {
       this.filters.search = event.target.value;
       this.render();
@@ -462,6 +465,8 @@ class HolocronApp {
     this.refs.headerStats.innerHTML = renderHeaderStats(stats, this.view);
     this.refs.modeBar.innerHTML = renderModeBar(this.session, this.saveState, this.lastSavedLabel, CONFIG_PATH);
     this.refs.commandDeck.classList.toggle("is-hidden", !isHomeView);
+    this.refs.controlBar.classList.toggle("is-hidden", !showBrowseControls);
+    this.refs.viewControlsBlock.classList.toggle("is-hidden", !showBrowseControls);
     this.refs.filterControlsBlock.classList.toggle("is-hidden", !showBrowseControls);
     this.refs.layoutControlsBlock.classList.toggle("is-hidden", !showBrowseControls);
     this.refs.resultNav.innerHTML = renderStageNav(this.view, this.characterFocus);
@@ -509,18 +514,11 @@ class HolocronApp {
 
     this.refs.detailOverlay.classList.toggle("is-hidden", !detailPanelVisible);
 
-    this.refs.countAll.textContent = String(this.catalog.length);
-    this.refs.countOwned.textContent = String(stats.ownedCount);
-    this.refs.countNotOwned.textContent = String(stats.notOwnedCount);
-    this.refs.countWishlist.textContent = String(stats.wishlistCount);
-    this.refs.countCharacters.textContent = String(allCharacterEntries.length);
-
-    this.refs.tabHome.classList.toggle("is-active", this.view === "home");
-    this.refs.tabAll.classList.toggle("is-active", this.view === "all");
-    this.refs.tabOwned.classList.toggle("is-active", this.view === "owned");
-    this.refs.tabNotOwned.classList.toggle("is-active", this.view === "not-owned");
-    this.refs.tabWishlist.classList.toggle("is-active", this.view === "wishlist");
-    this.refs.tabCharacters.classList.toggle("is-active", this.view === "characters");
+    if (this.view === "home" || this.view === "about") {
+      this.refs.viewSelect.value = "all";
+    } else {
+      this.refs.viewSelect.value = this.view;
+    }
 
     this.refs.imageOverlay.innerHTML = imageOverlay.markup;
     this.refs.imageOverlay.classList.toggle("is-hidden", imageOverlay.hidden);

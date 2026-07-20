@@ -143,6 +143,48 @@ a {
   opacity: 0.8;
 }
 
+.site-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.95rem 1.2rem;
+}
+
+.site-title-link {
+  display: grid;
+  gap: 0.28rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.site-title-link:hover .site-title,
+.site-title-link:focus-visible .site-title {
+  color: var(--gold);
+}
+
+.site-kicker {
+  color: var(--muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.site-title {
+  font-family: "Audiowide", sans-serif;
+  font-size: clamp(1rem, 1.8vw, 1.35rem);
+  line-height: 1.15;
+  transition: color 0.2s ease;
+}
+
+.site-home-button {
+  white-space: nowrap;
+}
+
 .command-deck {
   display: grid;
   gap: 1.5rem;
@@ -277,11 +319,15 @@ a {
 
 .control-bar {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.7fr) auto;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1.7fr) auto;
   align-items: start;
   gap: 1rem;
   margin-top: 1rem;
   padding: 1.15rem 1.25rem;
+}
+
+.control-bar.is-hidden {
+  display: none;
 }
 
 .control-group {
@@ -315,6 +361,11 @@ a {
   gap: 0.4rem;
   min-width: 180px;
   flex: 1 1 180px;
+}
+
+.inline-field-view {
+  min-width: 220px;
+  max-width: 320px;
 }
 
 .inline-field span {
@@ -558,29 +609,21 @@ a {
 
 .display-mode-shell {
   display: inline-flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
-  gap: 0.45rem;
-  padding: 0.45rem;
-  border-radius: 18px;
+  justify-content: flex-start;
+  gap: 0.25rem;
+  padding: 0.3rem;
+  border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.03);
 }
 
-.display-mode-label {
-  padding: 0 0.45rem 0 0.2rem;
-  color: var(--muted);
-  font-size: 0.82rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 .display-mode-button {
-  padding: 0.55rem 0.9rem;
+  min-width: 96px;
+  padding: 0.55rem 1rem;
   color: var(--copy);
   border: 1px solid transparent;
-  border-radius: 14px;
+  border-radius: 999px;
   background: transparent;
   cursor: pointer;
   transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
@@ -1385,6 +1428,11 @@ a {
     display: block;
   }
 
+  .site-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .control-bar {
     grid-template-columns: 1fr;
   }
@@ -1434,6 +1482,10 @@ a {
   .overlay-card,
   .figure-card {
     border-radius: 20px;
+  }
+
+  .site-title {
+    font-size: 0.98rem;
   }
 
   .view-tab {
