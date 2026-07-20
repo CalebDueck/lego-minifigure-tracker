@@ -79,24 +79,20 @@ export function renderShellMarkup(seriesOptions) {
 
       <div id="mode-bar" class="mode-bar"></div>
       <section id="control-bar" class="control-bar panel">
-        <div id="view-controls-block" class="control-group">
-          <div class="rail-title">Views</div>
-          <label class="inline-field inline-field-view">
-            <span>Active view</span>
-            <select id="view-select">
-              <option value="all">All Figures</option>
-              <option value="owned">Owned</option>
-              <option value="not-owned">Not Owned</option>
-              <option value="wishlist">Wishlist</option>
-              <option value="characters">Unique Characters</option>
-            </select>
-          </label>
-        </div>
-
         <div id="filter-controls-block" class="control-group">
-          <div class="rail-title">Scan Filters</div>
+          <div class="rail-title">Filters</div>
           <div class="filter-toolbar">
             <button class="ghost-button compact filter-clear-button" data-action="clear-filters">Clear filters</button>
+            <label class="inline-field inline-field-view">
+              <span>View</span>
+              <select id="view-select">
+                <option value="all">All Figures</option>
+                <option value="owned">Owned</option>
+                <option value="not-owned">Not Owned</option>
+                <option value="wishlist">Wishlist</option>
+                <option value="characters">Unique Characters</option>
+              </select>
+            </label>
             <label class="inline-field">
               <span>Search</span>
               <input id="search-input" type="search" placeholder="Luke, clone, fig-003..." autocomplete="off">
@@ -127,7 +123,6 @@ export function renderShellMarkup(seriesOptions) {
           <div class="rail-legend">
             ${badge("Owned", "owned")}
             ${badge("Wishlist", "wishlist")}
-            ${badge("Needs upgrade", "warning")}
           </div>
         </div>
       </section>
@@ -440,7 +435,6 @@ function renderFigureCard(figure, record, selected) {
   const badges = [
     owned ? badge("Owned", "owned") : "",
     wishlisted ? badge(`#${record.wishlistRank} wishlist`, "wishlist") : "",
-    record?.needsUpgrade ? badge("Needs upgrade", "warning") : "",
   ].join("");
 
   return `
@@ -517,11 +511,9 @@ function renderHolotable(figures, records, selectedId) {
 function renderHolotableToken(figure, record, selected) {
   const owned = Boolean(record?.owned);
   const wishlisted = Number.isInteger(record?.wishlistRank);
-  const needsUpgrade = Boolean(record?.needsUpgrade);
   const stateClasses = [
     owned ? "is-owned" : "",
     wishlisted ? "is-wishlisted" : "",
-    needsUpgrade ? "is-warning" : "",
     selected ? "is-selected" : "",
   ].filter(Boolean).join(" ");
 

@@ -296,10 +296,6 @@ a {
   color: var(--gold);
 }
 
-.pill-warning {
-  color: var(--warning);
-}
-
 .mode-copy,
 .save-state {
   color: var(--muted);
@@ -319,7 +315,7 @@ a {
 
 .control-bar {
   display: grid;
-  grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1.7fr) auto;
+  grid-template-columns: minmax(0, 1.7fr) auto;
   align-items: start;
   gap: 1rem;
   margin-top: 1rem;
@@ -1071,15 +1067,6 @@ a {
     0 14px 34px rgba(0, 0, 0, 0.4);
 }
 
-.figure-token.is-warning .figure-token-ring::after {
-  content: "";
-  position: absolute;
-  inset: 2px;
-  border-radius: inherit;
-  border: 1px dashed rgba(255, 196, 107, 0.48);
-  pointer-events: none;
-}
-
 .figure-token-core {
   position: relative;
   width: 100%;
@@ -1408,8 +1395,16 @@ a {
     height: calc(100dvh - 64px);
   }
 
+  .shell.shell-document-scroll {
+    height: auto;
+  }
+
   .workspace {
     flex: 1;
+  }
+
+  .shell.shell-document-scroll .workspace {
+    flex: none;
   }
 
   .roster-stage {
@@ -1418,6 +1413,11 @@ a {
     overflow-x: hidden;
     overflow-y: auto;
     scrollbar-gutter: stable;
+  }
+
+  .shell.shell-document-scroll .roster-stage {
+    height: auto;
+    overflow: visible;
   }
 }
 

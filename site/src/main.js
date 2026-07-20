@@ -96,12 +96,12 @@ class HolocronApp {
     this.root.classList.remove("app-boot");
     this.root.innerHTML = renderShellMarkup(this.seriesOptions);
     this.refs = {
+      shell: this.root.querySelector(".shell"),
       commandDeck: document.getElementById("command-deck"),
       controlBar: document.getElementById("control-bar"),
       workspace: document.getElementById("workspace"),
       headerStats: document.getElementById("header-stats"),
       modeBar: document.getElementById("mode-bar"),
-      viewControlsBlock: document.getElementById("view-controls-block"),
       filterControlsBlock: document.getElementById("filter-controls-block"),
       layoutControlsBlock: document.getElementById("layout-controls-block"),
       resultNav: document.getElementById("result-nav"),
@@ -220,10 +220,13 @@ class HolocronApp {
     }
 
     if (action === "clear-filters") {
+      this.view = "all";
+      this.characterFocus = null;
       this.filters = { search: "", series: "all", sort: "bricklink" };
       this.selectedId = null;
       this.detailPanelOpen = false;
       this.imageLightbox = null;
+      this.refs.viewSelect.value = "all";
       this.refs.searchInput.value = "";
       this.refs.seriesFilter.value = "all";
       this.refs.sortFilter.value = "bricklink";
@@ -461,12 +464,13 @@ class HolocronApp {
     const authOverlay = renderAuthOverlay(this.session);
     const detailPanelVisible = !isHomeView && !isAboutView && this.detailPanelOpen && Boolean(selectedFigure);
     const showBrowseControls = !isHomeView && !isAboutView;
+    const useDocumentScroll = isHomeView;
 
     this.refs.headerStats.innerHTML = renderHeaderStats(stats, this.view);
     this.refs.modeBar.innerHTML = renderModeBar(this.session, this.saveState, this.lastSavedLabel, CONFIG_PATH);
+    this.refs.shell.classList.toggle("shell-document-scroll", useDocumentScroll);
     this.refs.commandDeck.classList.toggle("is-hidden", !isHomeView);
     this.refs.controlBar.classList.toggle("is-hidden", !showBrowseControls);
-    this.refs.viewControlsBlock.classList.toggle("is-hidden", !showBrowseControls);
     this.refs.filterControlsBlock.classList.toggle("is-hidden", !showBrowseControls);
     this.refs.layoutControlsBlock.classList.toggle("is-hidden", !showBrowseControls);
     this.refs.resultNav.innerHTML = renderStageNav(this.view, this.characterFocus);
