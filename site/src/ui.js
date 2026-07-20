@@ -653,16 +653,6 @@ export function renderDetailPanel(figure, record, session, wishlistCount) {
           >
             <img src="${escapeHtml(figure.imageUrl)}" alt="${escapeHtml(figure.name)}">
           </button>
-          <button
-            class="ghost-button compact detail-zoom-button"
-            data-action="open-image-lightbox"
-            data-image-src="${escapeHtml(figure.imageUrl)}"
-            data-image-alt="${escapeHtml(figure.name)}"
-            data-image-title="${escapeHtml(figure.character)}"
-            type="button"
-          >
-            Full screen image
-          </button>
         </div>
         <div class="detail-copy">
           <div class="eyebrow">${escapeHtml(figure.movieSeries)}</div>

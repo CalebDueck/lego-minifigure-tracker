@@ -1302,10 +1302,6 @@ a {
   text-align: center;
 }
 
-.detail-zoom-button {
-  justify-self: stretch;
-}
-
 .detail-copy p {
   margin: 0.35rem 0 0;
   color: var(--muted);
