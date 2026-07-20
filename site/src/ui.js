@@ -75,8 +75,7 @@ export function renderShellMarkup(seriesOptions) {
     <div class="shell">
       <header class="site-bar panel">
         <button class="site-title-link" data-action="set-view" data-view="home" type="button">
-          <span class="site-kicker">Private collection holocron</span>
-          <span class="site-title">Lego: The Complete Star Wars Minifigure Compendium</span>
+          <span class="site-title">Private Collection Holocron</span>
         </button>
         <div id="site-account" class="site-account"></div>
       </header>
