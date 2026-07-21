@@ -608,6 +608,8 @@ export function renderDetailPanel(figure, record, session, wishlistCount) {
 
   const owned = Boolean(record?.owned);
   const wishlisted = Number.isInteger(record?.wishlistRank);
+  const canEditCollection = session.mode !== "firebase" || Boolean(session.user && session.authorized);
+  const collectionFieldState = canEditCollection ? "" : "disabled";
   const wishlistStatus = wishlisted
     ? `
       <div class="wishlist-row">
@@ -673,32 +675,32 @@ export function renderDetailPanel(figure, record, session, wishlistCount) {
           <div class="form-grid">
             <label class="field">
               <span>Quantity</span>
-              <input type="number" name="quantity" min="1" value="${owned ? escapeHtml(record.quantity || 1) : "1"}">
+              <input type="number" name="quantity" min="1" value="${owned ? escapeHtml(record.quantity || 1) : "1"}" ${collectionFieldState}>
             </label>
             <label class="field">
               <span>Condition</span>
-              <select name="condition">
+              <select name="condition" ${collectionFieldState}>
                 ${renderConditionOptions(record?.condition || "")}
               </select>
             </label>
           </div>
           <label class="field">
             <span>How you got it</span>
-            <input type="text" name="acquiredFrom" value="${escapeHtml(record?.acquiredFrom || "")}" placeholder="Cloud City set, polybag, BrickLink lot...">
+            <input type="text" name="acquiredFrom" value="${escapeHtml(record?.acquiredFrom || "")}" placeholder="Cloud City set, polybag, BrickLink lot..." ${collectionFieldState}>
           </label>
           <label class="checkbox-row">
-            <input type="checkbox" name="needsUpgrade" ${record?.needsUpgrade ? "checked" : ""}>
+            <input type="checkbox" name="needsUpgrade" ${record?.needsUpgrade ? "checked" : ""} ${collectionFieldState}>
             <span>Needs condition upgrade</span>
           </label>
           <label class="field">
             <span>Collection notes</span>
-            <textarea name="notes" rows="4" placeholder="Missing cape, torso crack, display-only copy...">${escapeHtml(record?.notes || "")}</textarea>
+            <textarea name="notes" rows="4" placeholder="Missing cape, torso crack, display-only copy..." ${collectionFieldState}>${escapeHtml(record?.notes || "")}</textarea>
           </label>
           <label class="field">
             <span>Wishlist notes</span>
-            <textarea name="wishlistNotes" rows="3" placeholder="Reason for priority, target set, upgrade notes..." ${wishlisted ? "" : "disabled"}>${escapeHtml(record?.wishlistNotes || "")}</textarea>
+            <textarea name="wishlistNotes" rows="3" placeholder="Reason for priority, target set, upgrade notes..." ${(wishlisted && canEditCollection) ? "" : "disabled"}>${escapeHtml(record?.wishlistNotes || "")}</textarea>
           </label>
-          <button class="primary-button submit-button" type="submit">Save collection log</button>
+          <button class="primary-button submit-button" type="submit" ${collectionFieldState}>Save collection log</button>
         </form>
       </div>
 
@@ -776,24 +778,45 @@ export function renderImageOverlay(lightbox) {
   };
 }
 
-export function renderAuthOverlay(session, view) {
+export function renderAuthOverlay(session, prompt) {
   if (session.mode !== "firebase") {
     return { hidden: true, markup: "" };
   }
 
-  if (!session.user && (view === "home" || view === "about")) {
-    return { hidden: true, markup: "" };
-  }
-
   if (!session.user) {
+    if (!prompt) {
+      return { hidden: true, markup: "" };
+    }
+
+    const promptCopy = {
+      owned: {
+        eyebrow: "Login required",
+        title: "Sign in to track owned figures",
+        body: "Browsing stays open without signing in. Use Google sign-in when you want to mark figures as owned and save collection notes.",
+      },
+      wishlist: {
+        eyebrow: "Login required",
+        title: "Sign in to manage your wishlist",
+        body: "Browsing stays open without signing in. Use Google sign-in when you want to rank wishlist targets and save priorities.",
+      },
+    }[prompt] || {
+      eyebrow: "Login required",
+      title: "Sign in to update your collection",
+      body: "Browsing stays open without signing in. Use Google sign-in when you want to save collection state.",
+    };
+
     return {
       hidden: false,
       markup: `
-        <div class="overlay-card">
-          <div class="eyebrow">Google auth required</div>
-          <h2>Open your private holocron</h2>
-          <p>Sign in with the Google account attached to your Firebase project to load synced collection data.</p>
-          <button class="primary-button" data-action="sign-in">Sign in with Google</button>
+        <div class="image-overlay-backdrop" data-action="dismiss-auth-overlay"></div>
+        <div class="overlay-card" role="dialog" aria-modal="true" aria-label="${escapeHtml(promptCopy.title)}">
+          <div class="eyebrow">${escapeHtml(promptCopy.eyebrow)}</div>
+          <h2>${escapeHtml(promptCopy.title)}</h2>
+          <p>${escapeHtml(promptCopy.body)}</p>
+          <div class="detail-actions">
+            <button class="primary-button" data-action="sign-in" type="button">Sign in with Google</button>
+            <button class="ghost-button" data-action="dismiss-auth-overlay" type="button">Keep browsing</button>
+          </div>
         </div>
       `,
     };

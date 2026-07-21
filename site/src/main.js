@@ -1,6 +1,6 @@
-import { loadCatalogBundle, deriveStats, filterAndSortFigures, cleanRecord, getWishlistIds, normalizeWishlistRanks, groupFiguresByCharacter, getCharacterArchiveLabel } from "./catalog.js?v=20260720h";
-import { firebaseConfig } from "./firebase-config.js?v=20260720h";
-import { createPersistence } from "./persistence.js?v=20260720h";
+import { loadCatalogBundle, deriveStats, filterAndSortFigures, cleanRecord, getWishlistIds, normalizeWishlistRanks, groupFiguresByCharacter, getCharacterArchiveLabel } from "./catalog.js?v=20260721a";
+import { firebaseConfig } from "./firebase-config.js?v=20260721a";
+import { createPersistence } from "./persistence.js?v=20260721a";
 import {
   renderShellMarkup,
   renderSiteAccountControl,
@@ -17,7 +17,7 @@ import {
   renderDetailPanel,
   renderImageOverlay,
   renderAuthOverlay,
-} from "./ui.js?v=20260720h";
+} from "./ui.js?v=20260721a";
 
 const DISPLAY_MODE_KEY = "sw-holocron-display-mode";
 
@@ -43,6 +43,7 @@ class HolocronApp {
     this.lastSavedLabel = "";
     this.accountMenuOpen = false;
     this.imageLightbox = null;
+    this.authPrompt = null;
     this.persistence = null;
     this.session = {
       mode: "local",
@@ -165,13 +166,21 @@ class HolocronApp {
 
     if (action === "sign-in") {
       this.accountMenuOpen = false;
+      this.authPrompt = null;
       this.persistence.signIn();
       return;
     }
 
     if (action === "sign-out") {
       this.accountMenuOpen = false;
+      this.authPrompt = null;
       this.persistence.signOut();
+      return;
+    }
+
+    if (action === "dismiss-auth-overlay") {
+      this.authPrompt = null;
+      this.render();
       return;
     }
 
@@ -191,6 +200,7 @@ class HolocronApp {
       this.selectedId = null;
       this.detailPanelOpen = false;
       this.imageLightbox = null;
+      this.authPrompt = null;
       this.accountMenuOpen = false;
       this.render();
       return;
@@ -210,6 +220,7 @@ class HolocronApp {
       this.selectedId = null;
       this.detailPanelOpen = false;
       this.imageLightbox = null;
+      this.authPrompt = null;
       this.accountMenuOpen = false;
       this.render();
       return;
@@ -244,6 +255,7 @@ class HolocronApp {
       this.selectedId = null;
       this.detailPanelOpen = false;
       this.imageLightbox = null;
+      this.authPrompt = null;
       this.accountMenuOpen = false;
       this.refs.viewSelect.value = "all";
       this.refs.searchInput.value = "";
@@ -258,6 +270,7 @@ class HolocronApp {
       this.selectedId = null;
       this.detailPanelOpen = false;
       this.imageLightbox = null;
+      this.authPrompt = null;
       this.accountMenuOpen = false;
       this.render();
       return;
@@ -271,6 +284,7 @@ class HolocronApp {
       this.selectedId = id;
       this.detailPanelOpen = true;
       this.imageLightbox = null;
+      this.authPrompt = null;
       this.accountMenuOpen = false;
       this.render();
       return;
@@ -303,6 +317,7 @@ class HolocronApp {
       this.selectedId = null;
       this.detailPanelOpen = false;
       this.imageLightbox = null;
+      this.authPrompt = null;
       this.accountMenuOpen = false;
       this.render();
       return;
@@ -338,6 +353,10 @@ class HolocronApp {
       return;
     }
 
+    if (this.session.mode === "firebase" && (!this.session.user || !this.session.authorized)) {
+      return;
+    }
+
     const current = this.records[id] || {};
     const formData = new FormData(form);
     const next = cleanRecord({
@@ -354,7 +373,21 @@ class HolocronApp {
     this.setRecord(id, next);
   }
 
+  requireAuth(reason) {
+    if (this.session.mode !== "firebase" || (this.session.user && this.session.authorized)) {
+      return true;
+    }
+
+    this.authPrompt = reason;
+    this.render();
+    return false;
+  }
+
   toggleOwned(id) {
+    if (!this.requireAuth("owned")) {
+      return;
+    }
+
     const current = this.records[id] || {};
     if (current.owned) {
       this.setRecord(id, cleanRecord({
@@ -377,6 +410,10 @@ class HolocronApp {
   }
 
   clearOwnedFields(id) {
+    if (!this.requireAuth("owned")) {
+      return;
+    }
+
     const current = this.records[id] || {};
     this.setRecord(id, cleanRecord({
       ...current,
@@ -390,6 +427,10 @@ class HolocronApp {
   }
 
   toggleWishlist(id) {
+    if (!this.requireAuth("wishlist")) {
+      return;
+    }
+
     const current = this.records[id] || {};
     if (Number.isInteger(current.wishlistRank)) {
       this.setRecord(id, cleanRecord({
@@ -409,6 +450,10 @@ class HolocronApp {
   }
 
   moveWishlist(id, direction) {
+    if (!this.requireAuth("wishlist")) {
+      return;
+    }
+
     const ordered = getWishlistIds(this.records);
     const index = ordered.indexOf(id);
     const nextIndex = index + direction;
@@ -484,7 +529,7 @@ class HolocronApp {
     const selectedFigureIsVisible = Boolean(selectedFigure && visibleFigureIds.has(selectedFigure.id));
     const selectedRecord = selectedFigure ? this.records[selectedFigure.id] : null;
     const imageOverlay = renderImageOverlay(this.imageLightbox);
-    const authOverlay = renderAuthOverlay(this.session, this.view);
+    const authOverlay = renderAuthOverlay(this.session, this.authPrompt);
     const detailPanelVisible = !isHomeView && !isAboutView && this.detailPanelOpen && Boolean(selectedFigure);
     const showBrowseControls = !isHomeView && !isAboutView;
     const useDocumentScroll = isHomeView;
