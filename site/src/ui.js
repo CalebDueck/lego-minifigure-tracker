@@ -27,6 +27,14 @@ function brickLinkSetUrl(appearance) {
   return `https://www.bricklink.com/v2/catalog/catalogitem.page?S=${encodeURIComponent(appearance.set_num)}`;
 }
 
+function rebrickableSetUrl(set) {
+  if (set.rebrickableUrl) {
+    return set.rebrickableUrl;
+  }
+
+  return `https://rebrickable.com/sets/${encodeURIComponent(set.set_num)}/`;
+}
+
 function minifigureIcon() {
   return `
     <svg class="minifig-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -49,6 +57,10 @@ function formatSeriesOptions(seriesOptions) {
   return seriesOptions
     .map((series) => `<option value="${escapeHtml(series)}">${escapeHtml(series)}</option>`)
     .join("");
+}
+
+function isSetView(view) {
+  return view === "sets" || view === "owned-sets" || view === "not-owned-sets";
 }
 
 function formatTimestamp(value) {
@@ -99,11 +111,18 @@ export function renderShellMarkup(seriesOptions) {
             <label class="inline-field inline-field-view">
               <span>View</span>
               <select id="view-select">
-                <option value="all">All Figures</option>
-                <option value="owned">Owned</option>
-                <option value="not-owned">Not Owned</option>
-                <option value="wishlist">Wishlist</option>
-                <option value="characters">Unique Characters</option>
+                <optgroup label="Minifigures">
+                  <option value="all">All Figures</option>
+                  <option value="owned">Owned</option>
+                  <option value="not-owned">Not Owned</option>
+                  <option value="wishlist">Wishlist</option>
+                  <option value="characters">Unique Characters</option>
+                </optgroup>
+                <optgroup label="Sets">
+                  <option value="sets">All Sets</option>
+                  <option value="owned-sets">Owned Sets</option>
+                  <option value="not-owned-sets">Not Owned Sets</option>
+                </optgroup>
               </select>
             </label>
             <label class="inline-field">
@@ -166,18 +185,36 @@ function renderHomeLaunchCard(view, label, count, copy) {
   `;
 }
 
-export function renderHomeOverview(stats, uniqueCharacterCount) {
+function renderHomeLaunchSection(title, cards) {
+  return `
+    <section class="home-launch-section">
+      <div class="home-launch-section-title">${escapeHtml(title)}</div>
+      <div class="home-launch-grid">
+        ${cards.join("")}
+      </div>
+    </section>
+  `;
+}
+
+export function renderHomeOverview(stats, uniqueCharacterCount, setStats) {
   return `
     <div class="home-overview">
       <div class="eyebrow">Launch a view</div>
-      <div class="home-launch-grid">
-        ${renderHomeLaunchCard("all", "All Figures", stats.total, "Browse the full Star Wars catalog")}
-        ${renderHomeLaunchCard("owned", "Owned", stats.ownedCount, "Jump straight into logged figures")}
-        ${renderHomeLaunchCard("not-owned", "Not Owned", stats.notOwnedCount, "Focus on the missing roster")}
-        ${renderHomeLaunchCard("wishlist", "Wishlist", stats.wishlistCount, "Review your ranked targets")}
-        ${renderHomeLaunchCard("characters", "Unique Characters", uniqueCharacterCount, "Browse by character grouping")}
-        ${renderHomeLaunchCard("about", "About", "Info", "See catalog sources and last update time")}
-      </div>
+      ${renderHomeLaunchSection("Minifigures", [
+        renderHomeLaunchCard("all", "All Figures", stats.total, "Browse the full Star Wars minifigure catalog"),
+        renderHomeLaunchCard("owned", "Owned", stats.ownedCount, "Jump straight into logged figures"),
+        renderHomeLaunchCard("not-owned", "Not Owned", stats.notOwnedCount, "Focus on the missing roster"),
+        renderHomeLaunchCard("wishlist", "Wishlist", stats.wishlistCount, "Review your ranked targets"),
+        renderHomeLaunchCard("characters", "Unique Characters", uniqueCharacterCount, "Browse by character grouping"),
+      ])}
+      ${renderHomeLaunchSection("Sets", [
+        renderHomeLaunchCard("sets", "All Sets", setStats.total, "Track complete sets and auto-log their minifigures"),
+        renderHomeLaunchCard("owned-sets", "Owned Sets", setStats.ownedCount, "Review completed set entries"),
+        renderHomeLaunchCard("not-owned-sets", "Not Owned Sets", setStats.notOwnedCount, "Focus on missing Star Wars sets"),
+      ])}
+      ${renderHomeLaunchSection("Catalog", [
+        renderHomeLaunchCard("about", "About", "Info", "See catalog sources and last update time"),
+      ])}
     </div>
   `;
 }
@@ -378,6 +415,15 @@ export function renderResultHeading(view, count, options = {}) {
   if (view === "wishlist") {
     return `${count} ranked wishlist targets`;
   }
+  if (view === "sets") {
+    return `${count} tracked Star Wars sets`;
+  }
+  if (view === "owned-sets") {
+    return `${count} owned Star Wars sets`;
+  }
+  if (view === "not-owned-sets") {
+    return `${count} Star Wars sets still missing`;
+  }
   if (view === "characters") {
     return `${count} unique characters`;
   }
@@ -405,6 +451,15 @@ export function renderResultSubheading(filters, view, showingCharacterDirectory,
   }
   if (showingCharacterDirectory) {
     parts.push("grouped by unique character");
+  } else if (isSetView(view)) {
+    const label = {
+      bricklink: "sorted by release order",
+      year: "sorted by year released",
+      name: "sorted alphabetically",
+      series: "sorted by film / series",
+      character: "sorted alphabetically",
+    }[filters.sort];
+    parts.push(label || "sorted by release order");
   } else if (view !== "wishlist") {
     const label = {
       bricklink: "sorted by BrickLink / release order",
@@ -420,6 +475,8 @@ export function renderResultSubheading(filters, view, showingCharacterDirectory,
 
   if (showingCharacterDirectory) {
     parts.push("showing one entry per character");
+  } else if (isSetView(view)) {
+    parts.push("showing set cards");
   } else {
     parts.push(figureDisplayMode === "holotable" ? "showing TCS head wall" : "showing intel cards");
   }
@@ -441,6 +498,50 @@ export function renderFigureGrid(figures, records, selectedId, displayMode) {
   }
 
   return figures.map((figure) => renderFigureCard(figure, records[figure.id], selectedId === figure.id)).join("");
+}
+
+export function renderSetGrid(sets, setRecords, figureRecords, selectedId) {
+  if (!sets.length) {
+    return `
+      <div class="empty-state">
+        <h2>No sets match this scan.</h2>
+        <p>Clear the filters or switch views to surface a different part of the set catalog.</p>
+      </div>
+    `;
+  }
+
+  return sets.map((set) => renderSetCard(set, setRecords[set.id], figureRecords, selectedId === set.id)).join("");
+}
+
+function renderSetCard(set, record, figureRecords, selected) {
+  const owned = Boolean(record?.owned);
+  const ownedFigureCount = set.figureIds.filter((figureId) => figureRecords[figureId]?.owned).length;
+  const stateClasses = [
+    owned ? "is-owned" : "",
+    selected ? "is-selected" : "",
+  ].filter(Boolean).join(" ");
+
+  return `
+    <article class="set-card figure-card ${stateClasses}">
+      <button class="figure-select set-select" data-action="select-set" data-id="${escapeHtml(set.id)}">
+        <div class="figure-order">${escapeHtml(set.set_num)}</div>
+        <div class="set-portrait-shell">
+          <img src="${escapeHtml(set.imageUrl)}" alt="${escapeHtml(set.name)}" loading="lazy">
+        </div>
+        <div class="figure-character">${escapeHtml(set.name)}</div>
+        <div class="figure-name">${escapeHtml(set.movieSeries)}</div>
+        <div class="figure-meta">${escapeHtml(set.year)} · ${escapeHtml(set.figureCount)} minifigs · ${escapeHtml(ownedFigureCount)} owned</div>
+      </button>
+      <div class="figure-link-row">
+        <a class="figure-link-inline" href="${escapeHtml(set.bricklinkUrl)}" target="_blank" rel="noreferrer">Open set on BrickLink</a>
+      </div>
+      <div class="figure-actions">
+        <button class="state-toggle-button ${owned ? "is-active" : ""}" data-action="toggle-set-owned" data-id="${escapeHtml(set.id)}">
+          ${owned ? "Complete Set" : "Complete Set?"}
+        </button>
+      </div>
+    </article>
+  `;
 }
 
 function renderFigureCard(figure, record, selected) {
@@ -733,6 +834,112 @@ export function renderDetailPanel(figure, record, session, wishlistCount) {
   `;
 }
 
+export function renderSetDetailPanel(set, record, session, figureCatalogById, figureRecords) {
+  if (!set) {
+    return `
+      <div class="detail-empty">
+        <div class="eyebrow">Set tracker</div>
+        <h2>Select a set</h2>
+        <p>Open a set to mark it complete, save set notes, and auto-add the included minifigures.</p>
+      </div>
+    `;
+  }
+
+  const owned = Boolean(record?.owned);
+  const canEditCollection = session.mode !== "firebase" || Boolean(session.user && session.authorized);
+  const collectionFieldState = canEditCollection ? "" : "disabled";
+  const ownedFigureCount = set.figureIds.filter((figureId) => figureRecords[figureId]?.owned).length;
+  const includedFigureRows = set.figureIds
+    .map((figureId) => {
+      const figure = figureCatalogById.get(figureId);
+      if (!figure) {
+        return "";
+      }
+
+      const figureOwned = Boolean(figureRecords[figureId]?.owned);
+      return `
+        <li class="set-figure-row">
+          <strong>${escapeHtml(figure.character)}</strong>
+          <span>${escapeHtml(figure.name)}${figureOwned ? " · Owned" : ""}</span>
+        </li>
+      `;
+    })
+    .filter(Boolean)
+    .join("");
+
+  return `
+    <button class="detail-dismiss-handle" data-action="toggle-detail-panel" type="button" aria-label="Dismiss details">
+      <span aria-hidden="true">&gt;</span>
+    </button>
+    <div class="detail-panel-body">
+      <div class="detail-head">
+        <div class="detail-portrait-shell">
+          <button
+            class="detail-portrait detail-portrait-button detail-set-portrait-button"
+            data-action="open-image-lightbox"
+            data-image-src="${escapeHtml(set.imageUrl)}"
+            data-image-alt="${escapeHtml(set.name)}"
+            data-image-title="${escapeHtml(set.set_num)}"
+            type="button"
+          >
+            <img src="${escapeHtml(set.imageUrl)}" alt="${escapeHtml(set.name)}">
+          </button>
+        </div>
+        <div class="detail-copy">
+          <div class="eyebrow">${escapeHtml(set.movieSeries)}</div>
+          <h2>${escapeHtml(set.set_num)}</h2>
+          <p>${escapeHtml(set.name)}</p>
+          <div class="detail-badges">
+            ${badge(String(set.year), "neutral")}
+            ${badge(`${set.figureCount} minifigs`, "neutral")}
+            ${badge(`${ownedFigureCount}/${set.figureCount} owned`, "neutral")}
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">Set log</div>
+        <div class="detail-actions">
+          <button class="state-toggle-button ${owned ? "is-active" : ""}" data-action="toggle-set-owned" data-id="${escapeHtml(set.id)}">${owned ? "Complete Set" : "Complete Set?"}</button>
+        </div>
+        <p class="detail-note">Marking a set complete will automatically add the minifigures from this set to your collection. Removing the set flag does not remove minifigure ownership.</p>
+        <form id="set-detail-form" data-id="${escapeHtml(set.id)}" class="detail-form">
+          <label class="field">
+            <span>How you got it</span>
+            <input type="text" name="acquiredFrom" value="${escapeHtml(record?.acquiredFrom || "")}" placeholder="Sealed box, used complete set, local pickup..." ${collectionFieldState}>
+          </label>
+          <label class="field">
+            <span>Set notes</span>
+            <textarea name="notes" rows="4" placeholder="Missing manual, box damaged, display build..." ${collectionFieldState}>${escapeHtml(record?.notes || "")}</textarea>
+          </label>
+          <button class="primary-button submit-button" type="submit" ${collectionFieldState}>Save set log</button>
+        </form>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">Catalog data</div>
+        <ul class="catalog-facts">
+          <li><strong>Set number</strong><span>${escapeHtml(set.set_num)}</span></li>
+          <li><strong>Year</strong><span>${escapeHtml(set.year)}</span></li>
+          <li><strong>Theme path</strong><span>${escapeHtml(set.themePath)}</span></li>
+          <li><strong>Included minifigs</strong><span>${escapeHtml(set.figureCount)}</span></li>
+        </ul>
+        <div class="detail-links">
+          <a class="external-link" href="${escapeHtml(rebrickableSetUrl(set))}" target="_blank" rel="noreferrer">Open Rebrickable entry</a>
+          <a class="external-link" href="${escapeHtml(set.bricklinkUrl)}" target="_blank" rel="noreferrer">Open BrickLink entry</a>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">Included minifigures</div>
+        <ul class="appearance-list set-figure-list">
+          ${includedFigureRows}
+        </ul>
+      </div>
+    </div>
+  `;
+}
+
 function renderConditionOptions(selected) {
   const options = [
     "",
@@ -793,6 +1000,11 @@ export function renderAuthOverlay(session, prompt) {
         eyebrow: "Login required",
         title: "Sign in to track owned figures",
         body: "Browsing stays open without signing in. Use Google sign-in when you want to mark figures as owned and save collection notes.",
+      },
+      sets: {
+        eyebrow: "Login required",
+        title: "Sign in to track owned sets",
+        body: "Browsing stays open without signing in. Use Google sign-in when you want to mark complete sets and automatically add their included minifigures.",
       },
       wishlist: {
         eyebrow: "Login required",

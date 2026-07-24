@@ -1,9 +1,11 @@
 const CATALOG_URL = new URL("../data/catalog.json", import.meta.url);
+const SETS_URL = new URL("../data/sets.json", import.meta.url);
 const META_URL = new URL("../data/catalog-meta.json", import.meta.url);
 
 export async function loadCatalogBundle() {
-  const [catalogResponse, metaResponse] = await Promise.all([
+  const [catalogResponse, setsResponse, metaResponse] = await Promise.all([
     fetch(CATALOG_URL),
+    fetch(SETS_URL),
     fetch(META_URL),
   ]);
 
@@ -12,20 +14,24 @@ export async function loadCatalogBundle() {
   }
 
   const catalog = await catalogResponse.json();
+  const sets = setsResponse.ok ? await setsResponse.json() : [];
   const meta = metaResponse.ok ? await metaResponse.json() : {};
   const byId = new Map(catalog.map((figure) => [figure.id, figure]));
+  const setsById = new Map(sets.map((set) => [set.id, set]));
 
   return {
     catalog,
+    sets,
     meta,
     byId,
-    seriesOptions: buildSeriesOptions(catalog),
+    setsById,
+    seriesOptions: buildSeriesOptions(catalog, sets),
   };
 }
 
-export function buildSeriesOptions(catalog) {
+export function buildSeriesOptions(catalog, sets = []) {
   return [...new Map(
-    catalog
+    [...catalog, ...sets]
       .slice()
       .sort((left, right) => {
         if (left.movieSeriesOrder !== right.movieSeriesOrder) {
@@ -84,6 +90,24 @@ export function cleanRecord(record) {
   return cleaned;
 }
 
+export function cleanSetRecord(record) {
+  if (!record) {
+    return null;
+  }
+
+  const cleaned = {
+    owned: Boolean(record.owned),
+    acquiredFrom: Boolean(record.owned) ? (record.acquiredFrom || "").trim() : "",
+    notes: Boolean(record.owned) ? (record.notes || "").trim() : "",
+  };
+
+  if (!cleaned.owned) {
+    return null;
+  }
+
+  return cleaned;
+}
+
 export function deriveStats(catalog, records) {
   const ownedCount = Object.values(records).filter((record) => record.owned).length;
   const notOwnedCount = Math.max(0, catalog.length - ownedCount);
@@ -97,6 +121,19 @@ export function deriveStats(catalog, records) {
     notOwnedCount,
     wishlistCount,
     needsUpgradeCount,
+    completion,
+  };
+}
+
+export function deriveSetStats(setCatalog, setRecords) {
+  const ownedCount = Object.values(setRecords).filter((record) => record.owned).length;
+  const notOwnedCount = Math.max(0, setCatalog.length - ownedCount);
+  const completion = setCatalog.length ? Math.round((ownedCount / setCatalog.length) * 1000) / 10 : 0;
+
+  return {
+    total: setCatalog.length,
+    ownedCount,
+    notOwnedCount,
     completion,
   };
 }
@@ -367,6 +404,57 @@ export function filterAndSortFigures(catalog, records, view, filters) {
 
   const sorter = sorters[filters.sort] || sorters.bricklink;
   return figures.sort(sorter);
+}
+
+export function filterAndSortSets(setCatalog, setRecords, view, filters) {
+  const query = filters.search.trim().toLowerCase();
+  const sets = setCatalog.filter((set) => {
+    const record = setRecords[set.id];
+
+    if (view === "owned-sets" && !record?.owned) {
+      return false;
+    }
+
+    if (view === "not-owned-sets" && record?.owned) {
+      return false;
+    }
+
+    if (filters.series !== "all" && set.movieSeries !== filters.series) {
+      return false;
+    }
+
+    if (!query) {
+      return true;
+    }
+
+    return set.searchText.includes(query);
+  });
+
+  const sorters = {
+    bricklink: (left, right) => compareTuple(
+      [left.year, left.set_num, left.name],
+      [right.year, right.set_num, right.name],
+    ),
+    year: (left, right) => compareTuple(
+      [left.year, left.set_num],
+      [right.year, right.set_num],
+    ),
+    character: (left, right) => compareTuple(
+      [left.name, left.set_num],
+      [right.name, right.set_num],
+    ),
+    name: (left, right) => compareTuple(
+      [left.name, left.set_num],
+      [right.name, right.set_num],
+    ),
+    series: (left, right) => compareTuple(
+      [left.movieSeriesOrder, left.movieSeries, left.year, left.set_num],
+      [right.movieSeriesOrder, right.movieSeries, right.year, right.set_num],
+    ),
+  };
+
+  const sorter = sorters[filters.sort] || sorters.bricklink;
+  return sets.sort(sorter);
 }
 
 function compareBricklinkFallback(left, right) {

@@ -1,6 +1,18 @@
-import { loadCatalogBundle, deriveStats, filterAndSortFigures, cleanRecord, getWishlistIds, normalizeWishlistRanks, groupFiguresByCharacter, getCharacterArchiveLabel } from "./catalog.js?v=20260721a";
-import { firebaseConfig } from "./firebase-config.js?v=20260721a";
-import { createPersistence } from "./persistence.js?v=20260721a";
+import {
+  loadCatalogBundle,
+  deriveStats,
+  deriveSetStats,
+  filterAndSortFigures,
+  filterAndSortSets,
+  cleanRecord,
+  cleanSetRecord,
+  getWishlistIds,
+  normalizeWishlistRanks,
+  groupFiguresByCharacter,
+  getCharacterArchiveLabel,
+} from "./catalog.js?v=20260724b";
+import { firebaseConfig } from "./firebase-config.js?v=20260724b";
+import { createPersistence } from "./persistence.js?v=20260724b";
 import {
   renderShellMarkup,
   renderSiteAccountControl,
@@ -12,23 +24,29 @@ import {
   renderResultHeading,
   renderResultSubheading,
   renderFigureGrid,
+  renderSetGrid,
   renderCharacterDirectory,
   renderCharacterFocusEmptyPanel,
   renderDetailPanel,
+  renderSetDetailPanel,
   renderImageOverlay,
   renderAuthOverlay,
-} from "./ui.js?v=20260721a";
+} from "./ui.js?v=20260724b";
 
 const DISPLAY_MODE_KEY = "sw-holocron-display-mode";
+const SET_VIEWS = new Set(["sets", "owned-sets", "not-owned-sets"]);
 
 class HolocronApp {
   constructor(root) {
     this.root = root;
     this.catalog = [];
     this.catalogById = new Map();
+    this.setCatalog = [];
+    this.setsById = new Map();
     this.catalogMeta = {};
     this.seriesOptions = [];
     this.records = {};
+    this.setRecords = {};
     this.selectedId = null;
     this.detailPanelOpen = false;
     this.filters = {
@@ -62,6 +80,8 @@ class HolocronApp {
     const bundle = await loadCatalogBundle();
     this.catalog = bundle.catalog;
     this.catalogById = bundle.byId;
+    this.setCatalog = bundle.sets;
+    this.setsById = bundle.setsById;
     this.catalogMeta = bundle.meta;
     this.seriesOptions = bundle.seriesOptions;
 
@@ -85,11 +105,13 @@ class HolocronApp {
 
     if (!this.session.userId || !this.session.authorized) {
       this.records = {};
+      this.setRecords = {};
       return;
     }
 
-    this.unsubscribeState = this.persistence.subscribeState(this.session.userId, (records) => {
-      this.records = records || {};
+    this.unsubscribeState = this.persistence.subscribeState(this.session.userId, (state) => {
+      this.records = state?.figures || {};
+      this.setRecords = state?.sets || {};
       this.render();
     });
   }
@@ -266,6 +288,10 @@ class HolocronApp {
     }
 
     if (action === "select-character") {
+      if (this.view === "sets") {
+        return;
+      }
+
       this.characterFocus = actionTarget.dataset.character || null;
       this.selectedId = null;
       this.detailPanelOpen = false;
@@ -290,6 +316,16 @@ class HolocronApp {
       return;
     }
 
+    if (action === "select-set") {
+      this.selectedId = id;
+      this.detailPanelOpen = true;
+      this.imageLightbox = null;
+      this.authPrompt = null;
+      this.accountMenuOpen = false;
+      this.render();
+      return;
+    }
+
     if (action === "toggle-owned") {
       this.toggleOwned(id);
       return;
@@ -302,6 +338,11 @@ class HolocronApp {
 
     if (action === "toggle-wishlist") {
       this.toggleWishlist(id);
+      return;
+    }
+
+    if (action === "toggle-set-owned") {
+      this.toggleSetOwned(id);
       return;
     }
 
@@ -343,6 +384,27 @@ class HolocronApp {
 
   handleSubmit(event) {
     const form = event.target;
+    if (form.id === "set-detail-form") {
+      event.preventDefault();
+      const id = form.dataset.id;
+      if (!id) {
+        return;
+      }
+
+      if (this.session.mode === "firebase" && (!this.session.user || !this.session.authorized)) {
+        return;
+      }
+
+      const current = this.setRecords[id] || {};
+      const formData = new FormData(form);
+      this.markSetOwned(id, {
+        ...current,
+        acquiredFrom: formData.get("acquiredFrom"),
+        notes: formData.get("notes"),
+      });
+      return;
+    }
+
     if (form.id !== "detail-form") {
       return;
     }
@@ -478,6 +540,55 @@ class HolocronApp {
     this.render();
   }
 
+  toggleSetOwned(id) {
+    if (!this.requireAuth("sets")) {
+      return;
+    }
+
+    const set = this.setsById.get(id);
+    if (!set) {
+      return;
+    }
+
+    const current = this.setRecords[id] || {};
+    if (current.owned) {
+      this.setSetRecord(id, cleanSetRecord({
+        ...current,
+        owned: false,
+        acquiredFrom: "",
+        notes: "",
+      }));
+      return;
+    }
+
+    this.markSetOwned(id, current);
+  }
+
+  markSetOwned(id, nextSetData = {}) {
+    const set = this.setsById.get(id);
+    if (!set) {
+      return;
+    }
+
+    const sourceLabel = `Complete set ${set.set_num}: ${set.name}`;
+    const nextRecords = { ...this.records };
+    set.figureIds.forEach((figureId) => {
+      const currentFigure = nextRecords[figureId] || {};
+      nextRecords[figureId] = cleanRecord({
+        ...currentFigure,
+        owned: true,
+        quantity: currentFigure.quantity || 1,
+        acquiredFrom: currentFigure.acquiredFrom || sourceLabel,
+      });
+    });
+
+    this.records = nextRecords;
+    this.setSetRecord(id, cleanSetRecord({
+      ...nextSetData,
+      owned: true,
+    }));
+  }
+
   setRecord(id, record, normalizeWishlist = false) {
     const nextRecords = { ...this.records };
     if (record) {
@@ -491,6 +602,19 @@ class HolocronApp {
     this.render();
   }
 
+  setSetRecord(id, record) {
+    const nextRecords = { ...this.setRecords };
+    if (record) {
+      nextRecords[id] = record;
+    } else {
+      delete nextRecords[id];
+    }
+
+    this.setRecords = nextRecords;
+    this.queueSave();
+    this.render();
+  }
+
   queueSave() {
     if (!this.session.userId || !this.session.authorized) {
       return;
@@ -500,7 +624,10 @@ class HolocronApp {
     clearTimeout(this.saveTimer);
     this.saveTimer = setTimeout(async () => {
       try {
-        await this.persistence.saveState(this.session.userId, this.records);
+        await this.persistence.saveState(this.session.userId, {
+          figures: this.records,
+          sets: this.setRecords,
+        });
         this.saveState = "saved";
         this.lastSavedLabel = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
       } catch (error) {
@@ -512,26 +639,35 @@ class HolocronApp {
 
   render() {
     const stats = deriveStats(this.catalog, this.records);
+    const setStats = deriveSetStats(this.setCatalog, this.setRecords);
     const allCharacterEntries = groupFiguresByCharacter(this.catalog, this.records);
     const isHomeView = this.view === "home";
     const isAboutView = this.view === "about";
-    const activeFigureView = isHomeView || isAboutView ? "all" : this.view;
+    const isSetsView = SET_VIEWS.has(this.view);
+    const activeFigureView = isHomeView || isAboutView || isSetsView ? "all" : this.view;
     const rosterFigures = filterAndSortFigures(this.catalog, this.records, activeFigureView, this.filters);
+    const rosterSets = filterAndSortSets(this.setCatalog, this.setRecords, this.view, this.filters);
     const characterEntries = groupFiguresByCharacter(rosterFigures, this.records);
     const visibleFigures = this.characterFocus
       ? rosterFigures.filter((figure) => getCharacterArchiveLabel(figure) === this.characterFocus)
       : rosterFigures;
+    const visibleSets = rosterSets;
     const showingCharacterDirectory = this.view === "characters" && !this.characterFocus;
     const visibleFigureIds = new Set(visibleFigures.map((figure) => figure.id));
+    const visibleSetIds = new Set(visibleSets.map((set) => set.id));
     const selectedFigure = !isHomeView && !isAboutView && !showingCharacterDirectory && this.selectedId
-      ? this.catalogById.get(this.selectedId)
+      ? (isSetsView ? null : this.catalogById.get(this.selectedId))
       : null;
+    const selectedSet = isSetsView && this.selectedId ? this.setsById.get(this.selectedId) : null;
     const selectedFigureIsVisible = Boolean(selectedFigure && visibleFigureIds.has(selectedFigure.id));
+    const selectedSetIsVisible = Boolean(selectedSet && visibleSetIds.has(selectedSet.id));
     const selectedRecord = selectedFigure ? this.records[selectedFigure.id] : null;
+    const selectedSetRecord = selectedSet ? this.setRecords[selectedSet.id] : null;
     const imageOverlay = renderImageOverlay(this.imageLightbox);
     const authOverlay = renderAuthOverlay(this.session, this.authPrompt);
-    const detailPanelVisible = !isHomeView && !isAboutView && this.detailPanelOpen && Boolean(selectedFigure);
+    const detailPanelVisible = !isHomeView && !isAboutView && this.detailPanelOpen && Boolean(selectedFigure || selectedSet);
     const showBrowseControls = !isHomeView && !isAboutView;
+    const showLayoutControls = showBrowseControls && !isSetsView;
     const useDocumentScroll = isHomeView;
 
     this.refs.siteAccount.innerHTML = renderSiteAccountControl(this.session, this.accountMenuOpen);
@@ -540,14 +676,14 @@ class HolocronApp {
     this.refs.commandDeck.classList.toggle("is-hidden", !isHomeView);
     this.refs.controlBar.classList.toggle("is-hidden", !showBrowseControls);
     this.refs.filterControlsBlock.classList.toggle("is-hidden", !showBrowseControls);
-    this.refs.layoutControlsBlock.classList.toggle("is-hidden", !showBrowseControls);
+    this.refs.layoutControlsBlock.classList.toggle("is-hidden", !showLayoutControls);
     this.refs.resultNav.innerHTML = renderStageNav(this.view, this.characterFocus);
-    this.refs.displayControls.innerHTML = showBrowseControls
+    this.refs.displayControls.innerHTML = showLayoutControls
       ? renderDisplayModeControls(this.figureDisplayMode, showingCharacterDirectory)
       : "";
     this.refs.resultHeading.textContent = renderResultHeading(
       this.view,
-      showingCharacterDirectory ? characterEntries.length : visibleFigures.length,
+      isSetsView ? visibleSets.length : (showingCharacterDirectory ? characterEntries.length : visibleFigures.length),
       { showingCharacterDirectory, characterFocus: this.characterFocus },
     );
     this.refs.resultSubheading.textContent = renderResultSubheading(
@@ -559,18 +695,34 @@ class HolocronApp {
     );
 
     if (isHomeView) {
-      this.refs.figureGrid.innerHTML = renderHomeOverview(stats, allCharacterEntries.length);
-      this.refs.figureGrid.classList.remove("figure-grid-holotable", "figure-grid-character-directory", "figure-grid-about");
+      this.refs.figureGrid.innerHTML = renderHomeOverview(stats, allCharacterEntries.length, setStats);
+      this.refs.figureGrid.classList.remove("figure-grid-holotable", "figure-grid-character-directory", "figure-grid-about", "figure-grid-sets");
       this.refs.figureGrid.classList.add("figure-grid-home");
       this.refs.detailPanel.innerHTML = "";
     } else if (isAboutView) {
       this.refs.figureGrid.innerHTML = renderAboutOverview(this.catalogMeta);
-      this.refs.figureGrid.classList.remove("figure-grid-holotable", "figure-grid-character-directory", "figure-grid-home");
+      this.refs.figureGrid.classList.remove("figure-grid-holotable", "figure-grid-character-directory", "figure-grid-home", "figure-grid-sets");
       this.refs.figureGrid.classList.add("figure-grid-about");
       this.refs.detailPanel.innerHTML = "";
+    } else if (isSetsView) {
+      this.refs.figureGrid.innerHTML = renderSetGrid(
+        visibleSets,
+        this.setRecords,
+        this.records,
+        selectedSetIsVisible ? selectedSet.id : null,
+      );
+      this.refs.figureGrid.classList.remove("figure-grid-holotable", "figure-grid-character-directory", "figure-grid-home", "figure-grid-about");
+      this.refs.figureGrid.classList.add("figure-grid-sets");
+      this.refs.detailPanel.innerHTML = renderSetDetailPanel(
+        selectedSet,
+        selectedSetRecord,
+        this.session,
+        this.catalogById,
+        this.records,
+      );
     } else if (showingCharacterDirectory) {
       this.refs.figureGrid.innerHTML = renderCharacterDirectory(characterEntries);
-      this.refs.figureGrid.classList.remove("figure-grid-holotable", "figure-grid-home", "figure-grid-about");
+      this.refs.figureGrid.classList.remove("figure-grid-holotable", "figure-grid-home", "figure-grid-about", "figure-grid-sets");
       this.refs.figureGrid.classList.add("figure-grid-character-directory");
       this.refs.detailPanel.innerHTML = "";
     } else {
@@ -580,7 +732,7 @@ class HolocronApp {
         selectedFigureIsVisible ? selectedFigure.id : null,
         this.figureDisplayMode,
       );
-      this.refs.figureGrid.classList.remove("figure-grid-character-directory", "figure-grid-home", "figure-grid-about");
+      this.refs.figureGrid.classList.remove("figure-grid-character-directory", "figure-grid-home", "figure-grid-about", "figure-grid-sets");
       this.refs.figureGrid.classList.toggle("figure-grid-holotable", this.figureDisplayMode === "holotable");
       this.refs.detailPanel.innerHTML = selectedFigure
         ? renderDetailPanel(selectedFigure, selectedRecord, this.session, stats.wishlistCount)

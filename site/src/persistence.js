@@ -1,6 +1,28 @@
 const LOCAL_STORAGE_KEY = "sw-holocron-state-v1";
 const FIREBASE_VERSION = "12.16.0";
 
+function normalizeMap(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+
+function normalizeStatePayload(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return { figures: {}, sets: {} };
+  }
+
+  if ("figures" in value || "sets" in value) {
+    return {
+      figures: normalizeMap(value.figures),
+      sets: normalizeMap(value.sets),
+    };
+  }
+
+  return {
+    figures: normalizeMap(value),
+    sets: {},
+  };
+}
+
 export async function createPersistence(config) {
   if (!hasFirebaseConfig(config)) {
     return createLocalPersistence("Firebase config missing. Running in local device mode.");
@@ -55,9 +77,9 @@ function createLocalPersistence(reason) {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
-    async saveState(userId, figures) {
-      currentState = figures;
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(figures));
+    async saveState(userId, state) {
+      currentState = normalizeStatePayload(state);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentState));
       listeners.forEach((listener) => listener());
     },
     async signIn() {
@@ -72,9 +94,9 @@ function createLocalPersistence(reason) {
 function readLocalState() {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
+    return raw ? normalizeStatePayload(JSON.parse(raw)) : { figures: {}, sets: {} };
   } catch (error) {
-    return {};
+    return { figures: {}, sets: {} };
   }
 }
 
@@ -114,13 +136,15 @@ function createFirebasePersistence(config, appModule, authModule, firestoreModul
     subscribeState(userId, callback) {
       const stateRef = firestoreModule.doc(db, "users", userId, "state", "main");
       return firestoreModule.onSnapshot(stateRef, (snapshot) => {
-        callback(snapshot.exists() ? (snapshot.data().figures || {}) : {});
+        callback(normalizeStatePayload(snapshot.exists() ? snapshot.data() : null));
       });
     },
-    async saveState(userId, figures) {
+    async saveState(userId, state) {
+      const normalized = normalizeStatePayload(state);
       const stateRef = firestoreModule.doc(db, "users", userId, "state", "main");
       await firestoreModule.setDoc(stateRef, {
-        figures,
+        figures: normalized.figures,
+        sets: normalized.sets,
         updatedAt: firestoreModule.serverTimestamp(),
       }, { merge: true });
     },

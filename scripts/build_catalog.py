@@ -255,6 +255,36 @@ def slugify(value):
     return re.sub(r"[^a-z0-9]+", "-", ascii_value.lower()).strip("-")
 
 
+def choose_set_series(set_row, figure_catalog_by_id):
+    if set_row.get("series_candidate"):
+        return set_row["series_candidate"]
+
+    series_counts = defaultdict(int)
+    series_best_order = {}
+    for figure_id in set_row["figure_ids"]:
+        figure = figure_catalog_by_id.get(figure_id)
+        if not figure:
+            continue
+
+        series = figure["movieSeries"]
+        series_counts[series] += 1
+        current_best = series_best_order.get(series, figure["catalogOrder"])
+        series_best_order[series] = min(current_best, figure["catalogOrder"])
+
+    if not series_counts:
+        return "Expanded Universe / Other"
+
+    return sorted(
+        series_counts.keys(),
+        key=lambda series: (
+            -series_counts[series],
+            SERIES_ORDER.index(series) if series in SERIES_ORDER else len(SERIES_ORDER),
+            series_best_order.get(series, 10**9),
+            series,
+        ),
+    )[0]
+
+
 def download_to_cache(file_name):
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     target = CACHE_DIR / file_name
@@ -617,16 +647,55 @@ def main():
     for index, item in enumerate(catalog, start=1):
         item["catalogOrder"] = index
 
+    figure_catalog_by_id = {item["id"]: item for item in catalog}
+    set_catalog = []
+    for set_row in sorted(candidate_sets, key=lambda item: (item["year"], item["set_num"], item["name"])):
+        set_base = sets_by_num.get(set_row["set_num"], {})
+        figure_ids = sorted(
+            set_row["figure_ids"],
+            key=lambda figure_id: (
+                figure_catalog_by_id.get(figure_id, {}).get("catalogOrder", 10**9),
+                figure_id,
+            ),
+        )
+        series = choose_set_series(set_row, figure_catalog_by_id)
+        set_catalog.append(
+            {
+                "id": set_row["set_num"],
+                "set_num": set_row["set_num"],
+                "name": set_row["name"],
+                "year": set_row["year"],
+                "themePath": set_row["theme_path"],
+                "sourceKind": set_row["source_kind"],
+                "movieSeries": series,
+                "movieSeriesOrder": SERIES_ORDER.index(series) if series in SERIES_ORDER else len(SERIES_ORDER),
+                "imageUrl": set_base.get("img_url", ""),
+                "rebrickableUrl": f"https://rebrickable.com/sets/{set_row['set_num']}/",
+                "bricklinkUrl": f"https://www.bricklink.com/v2/catalog/catalogitem.page?S={set_row['set_num']}",
+                "figureIds": figure_ids,
+                "figureCount": len(figure_ids),
+                "searchText": " ".join(
+                    [
+                        set_row["set_num"].lower(),
+                        set_row["name"].lower(),
+                        str(set_row["year"]),
+                        series.lower(),
+                    ]
+                ),
+            }
+        )
+
     bricklink_mapped_count = sum(1 for item in catalog if item.get("bricklinkNumber"))
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUTPUT_DIR / "catalog.json").write_text(json.dumps(catalog, indent=2))
+    (OUTPUT_DIR / "sets.json").write_text(json.dumps(set_catalog, indent=2))
     (OUTPUT_DIR / "catalog-meta.json").write_text(
         json.dumps(
             {
                 "generatedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 "figureCount": len(catalog),
-                "setCount": len(candidate_sets),
+                "setCount": len(set_catalog),
                 "bricklinkMappedCount": bricklink_mapped_count,
                 "bricklinkCoveragePercent": round((bricklink_mapped_count / len(catalog)) * 100, 1) if catalog else 0,
                 "source": "Rebrickable bulk downloads + Brickset subtheme enrichment"
@@ -643,6 +712,7 @@ def main():
         )
     )
     print(f"Wrote {len(catalog)} figures to {OUTPUT_DIR / 'catalog.json'}")
+    print(f"Wrote {len(set_catalog)} sets to {OUTPUT_DIR / 'sets.json'}")
 
 
 if __name__ == "__main__":
