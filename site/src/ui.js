@@ -718,9 +718,10 @@ export function renderDetailPanel(figure, record, session, wishlistCount) {
   }
 
   const owned = Boolean(record?.owned);
+  const usedToOwn = Boolean(record?.usedToOwn);
   const wishlisted = Number.isInteger(record?.wishlistRank);
   const canEditCollection = session.mode !== "firebase" || Boolean(session.user && session.authorized);
-  const collectionFieldState = canEditCollection ? "" : "disabled";
+  const collectionFieldState = canEditCollection && (owned || usedToOwn) ? "" : "disabled";
   const wishlistStatus = wishlisted
     ? `
       <div class="wishlist-row">
@@ -770,6 +771,7 @@ export function renderDetailPanel(figure, record, session, wishlistCount) {
           <div class="detail-badges">
             ${badge(`Release #${String(figure.catalogOrder).padStart(4, "0")}`, "neutral")}
             ${figure.bricklinkNumber ? badge(`BL ${figure.bricklinkNumber}`, "neutral") : badge("BrickLink number pending", "neutral")}
+            ${usedToOwn ? badge("Used to own", "history") : ""}
             ${wishlisted ? badge(`Wishlist #${record.wishlistRank}`, "wishlist") : ""}
           </div>
         </div>
@@ -779,8 +781,9 @@ export function renderDetailPanel(figure, record, session, wishlistCount) {
         <div class="detail-section-title">Collection log</div>
         <div class="detail-actions">
           <button class="state-toggle-button ${owned ? "is-active" : ""}" data-action="toggle-owned" data-id="${escapeHtml(figure.id)}">${owned ? "Owned" : "Owned?"}</button>
+          <button class="state-toggle-button ${usedToOwn ? "is-active" : ""}" data-action="toggle-used-to-own" data-id="${escapeHtml(figure.id)}">${usedToOwn ? "Used to own" : "Used to own?"}</button>
           <button class="state-toggle-button ${wishlisted ? "is-active" : ""}" data-action="toggle-wishlist" data-id="${escapeHtml(figure.id)}">${wishlisted ? "Wishlisted" : "Wishlist?"}</button>
-          ${owned ? `<button class="ghost-button" data-action="clear-owned" data-id="${escapeHtml(figure.id)}">Clear log fields</button>` : ""}
+          ${(owned || usedToOwn) ? `<button class="ghost-button" data-action="clear-owned" data-id="${escapeHtml(figure.id)}">Clear log fields</button>` : ""}
         </div>
         <form id="detail-form" data-id="${escapeHtml(figure.id)}" class="detail-form">
           <div class="form-grid">
@@ -857,9 +860,10 @@ export function renderSetDetailPanel(set, record, session, figureCatalogById, fi
 
   const owned = Boolean(record?.owned);
   const partial = Boolean(record?.partial);
+  const usedToOwn = Boolean(record?.usedToOwn);
   const wishlisted = Boolean(record?.wishlisted);
   const canEditCollection = session.mode !== "firebase" || Boolean(session.user && session.authorized);
-  const collectionFieldState = canEditCollection ? "" : "disabled";
+  const collectionFieldState = canEditCollection && (owned || partial || usedToOwn) ? "" : "disabled";
   const ownedFigureCount = set.figureIds.filter((figureId) => figureRecords[figureId]?.owned).length;
   const includedFigureRows = set.figureIds
     .map((figureId) => {
@@ -913,6 +917,7 @@ export function renderSetDetailPanel(set, record, session, figureCatalogById, fi
             ${badge(`${set.figureCount} minifigs`, "neutral")}
             ${badge(`${ownedFigureCount}/${set.figureCount} owned`, "neutral")}
             ${partial ? badge("Partial", "neutral") : ""}
+            ${usedToOwn ? badge("Used to own", "history") : ""}
             ${wishlisted ? badge("Wishlisted", "wishlist") : ""}
           </div>
         </div>
@@ -923,6 +928,7 @@ export function renderSetDetailPanel(set, record, session, figureCatalogById, fi
         <div class="detail-actions">
           <button class="state-toggle-button ${owned ? "is-active" : ""}" data-action="toggle-set-owned" data-id="${escapeHtml(set.id)}">${owned ? "Complete Set" : "Complete Set?"}</button>
           <button class="state-toggle-button ${partial ? "is-active" : ""}" data-action="toggle-set-partial" data-id="${escapeHtml(set.id)}">${partial ? "Partial" : "Partial?"}</button>
+          <button class="state-toggle-button ${usedToOwn ? "is-active" : ""}" data-action="toggle-set-used-to-own" data-id="${escapeHtml(set.id)}">${usedToOwn ? "Used to own" : "Used to own?"}</button>
           <button class="state-toggle-button ${wishlisted ? "is-active" : ""}" data-action="toggle-set-wishlist" data-id="${escapeHtml(set.id)}">${wishlisted ? "Wishlisted" : "Wishlist?"}</button>
         </div>
         <div class="detail-section detail-subsection">

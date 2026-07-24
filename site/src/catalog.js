@@ -72,18 +72,24 @@ export function cleanRecord(record) {
     return null;
   }
 
+  const owned = Boolean(record.owned);
+  const usedToOwn = Boolean(!owned && record.usedToOwn);
+  const hasCollectionPresence = owned || usedToOwn;
+  const hasWishlist = Number.isInteger(record.wishlistRank);
+
   const cleaned = {
-    owned: Boolean(record.owned),
-    quantity: Boolean(record.owned) ? Math.max(1, Number(record.quantity) || 1) : null,
-    condition: Boolean(record.owned) ? (record.condition || "").trim() : "",
-    acquiredFrom: Boolean(record.owned) ? (record.acquiredFrom || "").trim() : "",
-    notes: Boolean(record.owned) ? (record.notes || "").trim() : "",
-    needsUpgrade: Boolean(record.owned && record.needsUpgrade),
-    wishlistRank: Number.isInteger(record.wishlistRank) ? record.wishlistRank : null,
-    wishlistNotes: Number.isInteger(record.wishlistRank) ? (record.wishlistNotes || "").trim() : "",
+    owned,
+    usedToOwn,
+    quantity: hasCollectionPresence ? Math.max(1, Number(record.quantity) || 1) : null,
+    condition: hasCollectionPresence ? (record.condition || "").trim() : "",
+    acquiredFrom: hasCollectionPresence ? (record.acquiredFrom || "").trim() : "",
+    notes: hasCollectionPresence ? (record.notes || "").trim() : "",
+    needsUpgrade: Boolean(owned && record.needsUpgrade),
+    wishlistRank: hasWishlist ? record.wishlistRank : null,
+    wishlistNotes: hasWishlist ? (record.wishlistNotes || "").trim() : "",
   };
 
-  if (!cleaned.owned && cleaned.wishlistRank === null) {
+  if (!hasCollectionPresence && cleaned.wishlistRank === null) {
     return null;
   }
 
@@ -96,14 +102,16 @@ export function cleanSetRecord(record) {
   }
 
   const owned = Boolean(record.owned);
-  const partial = Boolean(!owned && record.partial);
+  const usedToOwn = Boolean(!owned && !record.partial && record.usedToOwn);
+  const partial = Boolean(!owned && !usedToOwn && record.partial);
   const wishlisted = Boolean(record.wishlisted);
-  const hasCollectionPresence = owned || partial;
+  const hasCollectionPresence = owned || partial || usedToOwn;
   const hasAnyState = hasCollectionPresence || wishlisted;
 
   const cleaned = {
     owned,
     partial,
+    usedToOwn,
     wishlisted,
     acquiredFrom: hasCollectionPresence ? (record.acquiredFrom || "").trim() : "",
     notes: hasAnyState ? (record.notes || "").trim() : "",

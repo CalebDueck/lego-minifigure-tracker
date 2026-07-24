@@ -10,9 +10,9 @@ import {
   normalizeWishlistRanks,
   groupFiguresByCharacter,
   getCharacterArchiveLabel,
-} from "./catalog.js?v=20260724d";
-import { firebaseConfig } from "./firebase-config.js?v=20260724d";
-import { createPersistence } from "./persistence.js?v=20260724d";
+} from "./catalog.js?v=20260724e";
+import { firebaseConfig } from "./firebase-config.js?v=20260724e";
+import { createPersistence } from "./persistence.js?v=20260724e";
 import {
   renderShellMarkup,
   renderSiteAccountControl,
@@ -31,7 +31,7 @@ import {
   renderSetDetailPanel,
   renderImageOverlay,
   renderAuthOverlay,
-} from "./ui.js?v=20260724d";
+} from "./ui.js?v=20260724e";
 
 const DISPLAY_MODE_KEY = "sw-holocron-display-mode";
 const SET_VIEWS = new Set(["sets", "owned-sets", "not-owned-sets"]);
@@ -342,6 +342,12 @@ class HolocronApp {
       return;
     }
 
+    if (action === "toggle-used-to-own") {
+      this.rememberDetailScroll(actionTarget);
+      this.toggleUsedToOwn(id);
+      return;
+    }
+
     if (action === "clear-owned") {
       this.rememberDetailScroll(actionTarget);
       this.clearOwnedFields(id);
@@ -357,6 +363,12 @@ class HolocronApp {
     if (action === "toggle-set-owned") {
       this.rememberDetailScroll(actionTarget);
       this.toggleSetOwned(id);
+      return;
+    }
+
+    if (action === "toggle-set-used-to-own") {
+      this.rememberDetailScroll(actionTarget);
+      this.toggleSetUsedToOwn(id);
       return;
     }
 
@@ -452,7 +464,8 @@ class HolocronApp {
     const formData = new FormData(form);
     const next = cleanRecord({
       ...current,
-      owned: true,
+      owned: Boolean(current.owned),
+      usedToOwn: Boolean(current.usedToOwn),
       quantity: Number(formData.get("quantity")) || 1,
       condition: formData.get("condition"),
       acquiredFrom: formData.get("acquiredFrom"),
@@ -496,7 +509,22 @@ class HolocronApp {
     this.setRecord(id, cleanRecord({
       ...current,
       owned: true,
+      usedToOwn: false,
       quantity: current.quantity || 1,
+    }));
+  }
+
+  toggleUsedToOwn(id) {
+    if (!this.requireAuth("owned")) {
+      return;
+    }
+
+    const current = this.records[id] || {};
+    const nextUsedToOwn = !current.usedToOwn;
+    this.setRecord(id, cleanRecord({
+      ...current,
+      owned: false,
+      usedToOwn: nextUsedToOwn,
     }));
   }
 
@@ -508,7 +536,8 @@ class HolocronApp {
     const current = this.records[id] || {};
     this.setRecord(id, cleanRecord({
       ...current,
-      owned: true,
+      owned: Boolean(current.owned),
+      usedToOwn: Boolean(current.usedToOwn),
       quantity: 1,
       condition: "",
       acquiredFrom: "",
@@ -605,7 +634,27 @@ class HolocronApp {
     this.setSetRecord(id, cleanSetRecord({
       ...current,
       owned: false,
+      usedToOwn: false,
       partial: !current.partial,
+    }));
+  }
+
+  toggleSetUsedToOwn(id) {
+    if (!this.requireAuth("sets")) {
+      return;
+    }
+
+    const set = this.setsById.get(id);
+    if (!set) {
+      return;
+    }
+
+    const current = this.setRecords[id] || {};
+    this.setSetRecord(id, cleanSetRecord({
+      ...current,
+      owned: false,
+      partial: false,
+      usedToOwn: !current.usedToOwn,
     }));
   }
 
@@ -649,6 +698,7 @@ class HolocronApp {
       ...nextSetData,
       owned: true,
       partial: false,
+      usedToOwn: false,
     }));
   }
 

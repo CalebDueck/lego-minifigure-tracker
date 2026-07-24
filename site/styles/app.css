@@ -382,6 +382,10 @@ a {
   color: var(--gold);
 }
 
+.pill-history {
+  color: var(--warning);
+}
+
 .control-bar {
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) auto;
