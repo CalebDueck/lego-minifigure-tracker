@@ -1464,8 +1464,50 @@ a {
   gap: 0.2rem;
 }
 
+.set-figure-list {
+  list-style: none;
+  padding-left: 0;
+}
+
 .set-figure-row strong {
   color: var(--copy);
+}
+
+.set-figure-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.8rem;
+  align-items: start;
+  padding: 0.8rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.set-figure-row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.set-figure-row-copy {
+  display: grid;
+  gap: 0.22rem;
+  min-width: 0;
+}
+
+.set-figure-row-copy span {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.set-figure-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.set-figure-row-actions .state-toggle-button {
+  padding: 0.5rem 0.72rem;
+  border-radius: 14px;
+  font-size: 0.82rem;
 }
 
 .external-link {

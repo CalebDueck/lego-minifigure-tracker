@@ -515,11 +515,17 @@ export function renderSetGrid(sets, setRecords, figureRecords, selectedId) {
 
 function renderSetCard(set, record, figureRecords, selected) {
   const owned = Boolean(record?.owned);
+  const partial = Boolean(record?.partial);
+  const wishlisted = Boolean(record?.wishlisted);
   const ownedFigureCount = set.figureIds.filter((figureId) => figureRecords[figureId]?.owned).length;
   const stateClasses = [
     owned ? "is-owned" : "",
     selected ? "is-selected" : "",
   ].filter(Boolean).join(" ");
+  const badges = [
+    partial ? badge("Partial", "neutral") : "",
+    wishlisted ? badge("Wishlisted", "wishlist") : "",
+  ].join("");
 
   return `
     <article class="set-card figure-card ${stateClasses}">
@@ -535,9 +541,13 @@ function renderSetCard(set, record, figureRecords, selected) {
       <div class="figure-link-row">
         <a class="figure-link-inline" href="${escapeHtml(set.bricklinkUrl)}" target="_blank" rel="noreferrer">Open set on BrickLink</a>
       </div>
+      <div class="figure-badges">${badges}</div>
       <div class="figure-actions">
         <button class="state-toggle-button ${owned ? "is-active" : ""}" data-action="toggle-set-owned" data-id="${escapeHtml(set.id)}">
           ${owned ? "Complete Set" : "Complete Set?"}
+        </button>
+        <button class="state-toggle-button ${wishlisted ? "is-active" : ""}" data-action="toggle-set-wishlist" data-id="${escapeHtml(set.id)}">
+          ${wishlisted ? "Wishlisted" : "Wishlist?"}
         </button>
       </div>
     </article>
@@ -840,12 +850,14 @@ export function renderSetDetailPanel(set, record, session, figureCatalogById, fi
       <div class="detail-empty">
         <div class="eyebrow">Set tracker</div>
         <h2>Select a set</h2>
-        <p>Open a set to mark it complete, save set notes, and auto-add the included minifigures.</p>
+        <p>Open a set to mark it complete or partial, save set notes, and manage the included minifigures.</p>
       </div>
     `;
   }
 
   const owned = Boolean(record?.owned);
+  const partial = Boolean(record?.partial);
+  const wishlisted = Boolean(record?.wishlisted);
   const canEditCollection = session.mode !== "firebase" || Boolean(session.user && session.authorized);
   const collectionFieldState = canEditCollection ? "" : "disabled";
   const ownedFigureCount = set.figureIds.filter((figureId) => figureRecords[figureId]?.owned).length;
@@ -857,10 +869,17 @@ export function renderSetDetailPanel(set, record, session, figureCatalogById, fi
       }
 
       const figureOwned = Boolean(figureRecords[figureId]?.owned);
+      const figureWishlisted = Number.isInteger(figureRecords[figureId]?.wishlistRank);
       return `
         <li class="set-figure-row">
-          <strong>${escapeHtml(figure.character)}</strong>
-          <span>${escapeHtml(figure.name)}${figureOwned ? " · Owned" : ""}</span>
+          <div class="set-figure-row-copy">
+            <strong>${escapeHtml(figure.character)}</strong>
+            <span>${escapeHtml(figure.name)}</span>
+          </div>
+          <div class="set-figure-row-actions">
+            <button class="state-toggle-button ${figureOwned ? "is-active" : ""}" data-action="toggle-owned" data-id="${escapeHtml(figure.id)}">${figureOwned ? "Owned" : "Owned?"}</button>
+            <button class="state-toggle-button ${figureWishlisted ? "is-active" : ""}" data-action="toggle-wishlist" data-id="${escapeHtml(figure.id)}">${figureWishlisted ? "Wishlisted" : "Wishlist?"}</button>
+          </div>
         </li>
       `;
     })
@@ -893,6 +912,8 @@ export function renderSetDetailPanel(set, record, session, figureCatalogById, fi
             ${badge(String(set.year), "neutral")}
             ${badge(`${set.figureCount} minifigs`, "neutral")}
             ${badge(`${ownedFigureCount}/${set.figureCount} owned`, "neutral")}
+            ${partial ? badge("Partial", "neutral") : ""}
+            ${wishlisted ? badge("Wishlisted", "wishlist") : ""}
           </div>
         </div>
       </div>
@@ -901,8 +922,10 @@ export function renderSetDetailPanel(set, record, session, figureCatalogById, fi
         <div class="detail-section-title">Set log</div>
         <div class="detail-actions">
           <button class="state-toggle-button ${owned ? "is-active" : ""}" data-action="toggle-set-owned" data-id="${escapeHtml(set.id)}">${owned ? "Complete Set" : "Complete Set?"}</button>
+          <button class="state-toggle-button ${partial ? "is-active" : ""}" data-action="toggle-set-partial" data-id="${escapeHtml(set.id)}">${partial ? "Partial" : "Partial?"}</button>
+          <button class="state-toggle-button ${wishlisted ? "is-active" : ""}" data-action="toggle-set-wishlist" data-id="${escapeHtml(set.id)}">${wishlisted ? "Wishlisted" : "Wishlist?"}</button>
         </div>
-        <p class="detail-note">Marking a set complete will automatically add the minifigures from this set to your collection. Removing the set flag does not remove minifigure ownership.</p>
+        <p class="detail-note">Marking a set complete will automatically add the minifigures from this set to your collection. Partial keeps the set tracked without auto-claiming every figure. Removing the complete-set flag does not remove minifigure ownership.</p>
         <form id="set-detail-form" data-id="${escapeHtml(set.id)}" class="detail-form">
           <label class="field">
             <span>How you got it</span>
@@ -1005,6 +1028,11 @@ export function renderAuthOverlay(session, prompt) {
         eyebrow: "Login required",
         title: "Sign in to track owned sets",
         body: "Browsing stays open without signing in. Use Google sign-in when you want to mark complete sets and automatically add their included minifigures.",
+      },
+      "sets-wishlist": {
+        eyebrow: "Login required",
+        title: "Sign in to wishlist sets",
+        body: "Browsing stays open without signing in. Use Google sign-in when you want to save Star Wars sets into your wanted list.",
       },
       wishlist: {
         eyebrow: "Login required",

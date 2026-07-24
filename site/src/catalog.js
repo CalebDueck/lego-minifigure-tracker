@@ -95,13 +95,21 @@ export function cleanSetRecord(record) {
     return null;
   }
 
+  const owned = Boolean(record.owned);
+  const partial = Boolean(!owned && record.partial);
+  const wishlisted = Boolean(record.wishlisted);
+  const hasCollectionPresence = owned || partial;
+  const hasAnyState = hasCollectionPresence || wishlisted;
+
   const cleaned = {
-    owned: Boolean(record.owned),
-    acquiredFrom: Boolean(record.owned) ? (record.acquiredFrom || "").trim() : "",
-    notes: Boolean(record.owned) ? (record.notes || "").trim() : "",
+    owned,
+    partial,
+    wishlisted,
+    acquiredFrom: hasCollectionPresence ? (record.acquiredFrom || "").trim() : "",
+    notes: hasAnyState ? (record.notes || "").trim() : "",
   };
 
-  if (!cleaned.owned) {
+  if (!hasAnyState) {
     return null;
   }
 

@@ -10,9 +10,9 @@ import {
   normalizeWishlistRanks,
   groupFiguresByCharacter,
   getCharacterArchiveLabel,
-} from "./catalog.js?v=20260724b";
-import { firebaseConfig } from "./firebase-config.js?v=20260724b";
-import { createPersistence } from "./persistence.js?v=20260724b";
+} from "./catalog.js?v=20260724c";
+import { firebaseConfig } from "./firebase-config.js?v=20260724c";
+import { createPersistence } from "./persistence.js?v=20260724c";
 import {
   renderShellMarkup,
   renderSiteAccountControl,
@@ -31,7 +31,7 @@ import {
   renderSetDetailPanel,
   renderImageOverlay,
   renderAuthOverlay,
-} from "./ui.js?v=20260724b";
+} from "./ui.js?v=20260724c";
 
 const DISPLAY_MODE_KEY = "sw-holocron-display-mode";
 const SET_VIEWS = new Set(["sets", "owned-sets", "not-owned-sets"]);
@@ -346,6 +346,16 @@ class HolocronApp {
       return;
     }
 
+    if (action === "toggle-set-partial") {
+      this.toggleSetPartial(id);
+      return;
+    }
+
+    if (action === "toggle-set-wishlist") {
+      this.toggleSetWishlist(id);
+      return;
+    }
+
     if (action === "move-wishlist") {
       this.moveWishlist(id, Number(actionTarget.dataset.direction || 0));
     }
@@ -397,11 +407,11 @@ class HolocronApp {
 
       const current = this.setRecords[id] || {};
       const formData = new FormData(form);
-      this.markSetOwned(id, {
+      this.setSetRecord(id, cleanSetRecord({
         ...current,
         acquiredFrom: formData.get("acquiredFrom"),
         notes: formData.get("notes"),
-      });
+      }));
       return;
     }
 
@@ -555,13 +565,46 @@ class HolocronApp {
       this.setSetRecord(id, cleanSetRecord({
         ...current,
         owned: false,
-        acquiredFrom: "",
-        notes: "",
       }));
       return;
     }
 
     this.markSetOwned(id, current);
+  }
+
+  toggleSetPartial(id) {
+    if (!this.requireAuth("sets")) {
+      return;
+    }
+
+    const set = this.setsById.get(id);
+    if (!set) {
+      return;
+    }
+
+    const current = this.setRecords[id] || {};
+    this.setSetRecord(id, cleanSetRecord({
+      ...current,
+      owned: false,
+      partial: !current.partial,
+    }));
+  }
+
+  toggleSetWishlist(id) {
+    if (!this.requireAuth("sets-wishlist")) {
+      return;
+    }
+
+    const set = this.setsById.get(id);
+    if (!set) {
+      return;
+    }
+
+    const current = this.setRecords[id] || {};
+    this.setSetRecord(id, cleanSetRecord({
+      ...current,
+      wishlisted: !current.wishlisted,
+    }));
   }
 
   markSetOwned(id, nextSetData = {}) {
@@ -586,6 +629,7 @@ class HolocronApp {
     this.setSetRecord(id, cleanSetRecord({
       ...nextSetData,
       owned: true,
+      partial: false,
     }));
   }
 
