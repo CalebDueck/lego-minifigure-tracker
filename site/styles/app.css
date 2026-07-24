@@ -1414,6 +1414,12 @@ a {
   line-height: 1.5;
 }
 
+.detail-subsection {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 .detail-badges,
 .detail-actions,
 .wishlist-controls {

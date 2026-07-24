@@ -10,9 +10,9 @@ import {
   normalizeWishlistRanks,
   groupFiguresByCharacter,
   getCharacterArchiveLabel,
-} from "./catalog.js?v=20260724c";
-import { firebaseConfig } from "./firebase-config.js?v=20260724c";
-import { createPersistence } from "./persistence.js?v=20260724c";
+} from "./catalog.js?v=20260724d";
+import { firebaseConfig } from "./firebase-config.js?v=20260724d";
+import { createPersistence } from "./persistence.js?v=20260724d";
 import {
   renderShellMarkup,
   renderSiteAccountControl,
@@ -31,7 +31,7 @@ import {
   renderSetDetailPanel,
   renderImageOverlay,
   renderAuthOverlay,
-} from "./ui.js?v=20260724c";
+} from "./ui.js?v=20260724d";
 
 const DISPLAY_MODE_KEY = "sw-holocron-display-mode";
 const SET_VIEWS = new Set(["sets", "owned-sets", "not-owned-sets"]);
@@ -62,6 +62,7 @@ class HolocronApp {
     this.accountMenuOpen = false;
     this.imageLightbox = null;
     this.authPrompt = null;
+    this.pendingDetailScrollTop = null;
     this.persistence = null;
     this.session = {
       mode: "local",
@@ -171,6 +172,15 @@ class HolocronApp {
     this.root.addEventListener("input", (event) => this.handleInput(event));
     this.root.addEventListener("change", (event) => this.handleInput(event));
     this.root.addEventListener("submit", (event) => this.handleSubmit(event));
+  }
+
+  rememberDetailScroll(target) {
+    const panelBody = this.refs.detailPanel?.querySelector(".detail-panel-body");
+    if (!panelBody || !target?.closest("#detail-panel")) {
+      return;
+    }
+
+    this.pendingDetailScrollTop = panelBody.scrollTop;
   }
 
   handleClick(event) {
@@ -327,36 +337,43 @@ class HolocronApp {
     }
 
     if (action === "toggle-owned") {
+      this.rememberDetailScroll(actionTarget);
       this.toggleOwned(id);
       return;
     }
 
     if (action === "clear-owned") {
+      this.rememberDetailScroll(actionTarget);
       this.clearOwnedFields(id);
       return;
     }
 
     if (action === "toggle-wishlist") {
+      this.rememberDetailScroll(actionTarget);
       this.toggleWishlist(id);
       return;
     }
 
     if (action === "toggle-set-owned") {
+      this.rememberDetailScroll(actionTarget);
       this.toggleSetOwned(id);
       return;
     }
 
     if (action === "toggle-set-partial") {
+      this.rememberDetailScroll(actionTarget);
       this.toggleSetPartial(id);
       return;
     }
 
     if (action === "toggle-set-wishlist") {
+      this.rememberDetailScroll(actionTarget);
       this.toggleSetWishlist(id);
       return;
     }
 
     if (action === "move-wishlist") {
+      this.rememberDetailScroll(actionTarget);
       this.moveWishlist(id, Number(actionTarget.dataset.direction || 0));
     }
   }
@@ -405,6 +422,7 @@ class HolocronApp {
         return;
       }
 
+      this.rememberDetailScroll(form);
       const current = this.setRecords[id] || {};
       const formData = new FormData(form);
       this.setSetRecord(id, cleanSetRecord({
@@ -429,6 +447,7 @@ class HolocronApp {
       return;
     }
 
+    this.rememberDetailScroll(form);
     const current = this.records[id] || {};
     const formData = new FormData(form);
     const next = cleanRecord({
@@ -786,6 +805,18 @@ class HolocronApp {
     }
 
     this.refs.detailPanel.classList.toggle("is-hidden", !detailPanelVisible);
+    if (detailPanelVisible && this.pendingDetailScrollTop !== null) {
+      const nextScrollTop = this.pendingDetailScrollTop;
+      this.pendingDetailScrollTop = null;
+      requestAnimationFrame(() => {
+        const panelBody = this.refs.detailPanel?.querySelector(".detail-panel-body");
+        if (panelBody) {
+          panelBody.scrollTop = nextScrollTop;
+        }
+      });
+    } else if (!detailPanelVisible) {
+      this.pendingDetailScrollTop = null;
+    }
 
     if (this.view === "home" || this.view === "about") {
       this.refs.viewSelect.value = "all";

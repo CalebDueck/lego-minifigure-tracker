@@ -925,6 +925,12 @@ export function renderSetDetailPanel(set, record, session, figureCatalogById, fi
           <button class="state-toggle-button ${partial ? "is-active" : ""}" data-action="toggle-set-partial" data-id="${escapeHtml(set.id)}">${partial ? "Partial" : "Partial?"}</button>
           <button class="state-toggle-button ${wishlisted ? "is-active" : ""}" data-action="toggle-set-wishlist" data-id="${escapeHtml(set.id)}">${wishlisted ? "Wishlisted" : "Wishlist?"}</button>
         </div>
+        <div class="detail-section detail-subsection">
+          <div class="detail-section-title">Included minifigures</div>
+          <ul class="appearance-list set-figure-list">
+            ${includedFigureRows}
+          </ul>
+        </div>
         <p class="detail-note">Marking a set complete will automatically add the minifigures from this set to your collection. Partial keeps the set tracked without auto-claiming every figure. Removing the complete-set flag does not remove minifigure ownership.</p>
         <form id="set-detail-form" data-id="${escapeHtml(set.id)}" class="detail-form">
           <label class="field">
@@ -951,13 +957,6 @@ export function renderSetDetailPanel(set, record, session, figureCatalogById, fi
           <a class="external-link" href="${escapeHtml(rebrickableSetUrl(set))}" target="_blank" rel="noreferrer">Open Rebrickable entry</a>
           <a class="external-link" href="${escapeHtml(set.bricklinkUrl)}" target="_blank" rel="noreferrer">Open BrickLink entry</a>
         </div>
-      </div>
-
-      <div class="detail-section">
-        <div class="detail-section-title">Included minifigures</div>
-        <ul class="appearance-list set-figure-list">
-          ${includedFigureRows}
-        </ul>
       </div>
     </div>
   `;
