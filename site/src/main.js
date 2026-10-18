@@ -86,6 +86,8 @@ class HolocronApp {
     this.catalogMeta = bundle.meta;
     this.seriesOptions = bundle.seriesOptions;
 
+    this.restoreNavigation();
+    this.updateNavigation(true);
     this.persistence = await createPersistence(firebaseConfig);
     this.renderShell();
     this.bindEvents();
@@ -167,11 +169,77 @@ class HolocronApp {
     }
   }
 
+  restoreNavigation() {
+    const params = new URL(window.location.href).searchParams;
+    const views = new Set(["home", "about", "all", "owned", "not-owned", "wishlist", "characters", ...SET_VIEWS]);
+    this.view = views.has(params.get("view")) ? params.get("view") : "home";
+    this.filters = {
+      search: params.get("q") || "",
+      series: this.seriesOptions.includes(params.get("series")) ? params.get("series") : "all",
+      sort: ["bricklink", "year", "name", "series", "character"].includes(params.get("sort")) ? params.get("sort") : "bricklink",
+    };
+    const character = params.get("character");
+    this.characterFocus = !SET_VIEWS.has(this.view) && this.catalog.some((figure) => getCharacterArchiveLabel(figure) === character)
+      ? character : null;
+    const id = params.get("item");
+    this.selectedId = (SET_VIEWS.has(this.view) ? this.setsById : this.catalogById).has(id) ? id : null;
+    this.detailPanelOpen = Boolean(this.selectedId && params.get("detail") !== "closed");
+    if (params.has("layout")) {
+      this.figureDisplayMode = params.get("layout") === "holotable" ? "holotable" : "cards";
+    }
+    this.imageLightbox = null;
+    this.authPrompt = null;
+    this.accountMenuOpen = false;
+    this.pendingDetailScrollTop = null;
+    this.searchHistoryActive = false;
+    if (this.refs.searchInput) {
+      this.refs.searchInput.value = this.filters.search;
+      this.refs.seriesFilter.value = this.filters.series;
+      this.refs.sortFilter.value = this.filters.sort;
+    }
+  }
+
+  updateNavigation(replace = false) {
+    const url = new URL(window.location.href);
+    const values = {
+      view: this.view === "home" ? null : this.view,
+      q: this.filters.search || null,
+      series: this.filters.series === "all" ? null : this.filters.series,
+      sort: this.filters.sort === "bricklink" ? null : this.filters.sort,
+      character: this.characterFocus,
+      item: this.selectedId,
+      detail: this.selectedId && !this.detailPanelOpen ? "closed" : null,
+      layout: this.figureDisplayMode,
+    };
+    for (const [key, value] of Object.entries(values)) {
+      if (value) url.searchParams.set(key, value);
+      else url.searchParams.delete(key);
+    }
+    if (url.href === window.location.href) return false;
+    window.history[replace ? "replaceState" : "pushState"](null, "", url);
+    return true;
+  }
+
   bindEvents() {
-    this.root.addEventListener("click", (event) => this.handleClick(event));
-    this.root.addEventListener("input", (event) => this.handleInput(event));
-    this.root.addEventListener("change", (event) => this.handleInput(event));
+    this.root.addEventListener("click", (event) => {
+      this.searchHistoryActive = false;
+      this.handleClick(event);
+      this.updateNavigation();
+    });
+    const handleInput = (event) => {
+      this.handleInput(event);
+      const searching = event.target === this.refs.searchInput;
+      const changed = this.updateNavigation(searching && this.searchHistoryActive);
+      if (searching && changed) this.searchHistoryActive = true;
+      if (!searching || event.type === "change") this.searchHistoryActive = false;
+    };
+    this.root.addEventListener("input", handleInput);
+    this.root.addEventListener("change", handleInput);
     this.root.addEventListener("submit", (event) => this.handleSubmit(event));
+    window.addEventListener("popstate", () => {
+      this.restoreNavigation();
+      this.render();
+    });
   }
 
   rememberDetailScroll(target) {

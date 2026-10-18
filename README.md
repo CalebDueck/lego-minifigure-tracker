@@ -31,6 +31,21 @@ Then open `http://localhost:4173`.
 
 If Firebase config is blank, the app runs in local device mode and saves state in `localStorage`.
 
+## Navigation links
+
+Views, searches, film/series filters, sorting, layouts, and selected figures or sets
+are stored in URL query parameters. Reloading or sharing a URL restores that view;
+Back and Forward restore previous navigation states. Search edits share one history
+entry per editing session. Collection changes are saved separately and are not
+undone by Back or Forward.
+
+Run the navigation and collection regression checks with Node.js:
+
+```bash
+node tests/navigation.mjs
+node tests/toggles.mjs
+```
+
 ## Firebase setup
 
 1. Create a Firebase project.
