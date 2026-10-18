@@ -142,11 +142,12 @@ function createFirebasePersistence(config, appModule, authModule, firestoreModul
     async saveState(userId, state) {
       const normalized = normalizeStatePayload(state);
       const stateRef = firestoreModule.doc(db, "users", userId, "state", "main");
+      // Replace each collection map so records removed by toggles stay deleted.
       await firestoreModule.setDoc(stateRef, {
         figures: normalized.figures,
         sets: normalized.sets,
         updatedAt: firestoreModule.serverTimestamp(),
-      }, { merge: true });
+      }, { mergeFields: ["figures", "sets", "updatedAt"] });
     },
     async signIn() {
       await authModule.signInWithPopup(auth, provider);

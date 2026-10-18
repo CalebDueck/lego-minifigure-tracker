@@ -12,7 +12,7 @@ import {
   getCharacterArchiveLabel,
 } from "./catalog.js?v=20260724e";
 import { firebaseConfig } from "./firebase-config.js?v=20260724e";
-import { createPersistence } from "./persistence.js?v=20260724e";
+import { createPersistence } from "./persistence.js?v=20261017a";
 import {
   renderShellMarkup,
   renderSiteAccountControl,
