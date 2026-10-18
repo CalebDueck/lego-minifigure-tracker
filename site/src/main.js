@@ -31,7 +31,7 @@ import {
   renderSetDetailPanel,
   renderImageOverlay,
   renderAuthOverlay,
-} from "./ui.js?v=20261018b";
+} from "./ui.js?v=20261018d";
 
 const DISPLAY_MODE_KEY = "sw-holocron-display-mode";
 const SET_VIEWS = new Set(["sets", "owned-sets", "not-owned-sets"]);
@@ -263,6 +263,18 @@ class HolocronApp {
 
     const action = actionTarget.dataset.action;
     const id = actionTarget.dataset.id;
+
+    if (action === "open-set-page") {
+      if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+        return;
+      }
+      event.preventDefault();
+      window.history.pushState(null, "", new URL(actionTarget.getAttribute("href"), window.location.href));
+      this.restoreNavigation();
+      this.updateNavigation(true);
+      this.render();
+      return;
+    }
 
     if (action === "sign-in") {
       this.accountMenuOpen = false;

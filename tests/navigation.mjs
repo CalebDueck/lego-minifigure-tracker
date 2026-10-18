@@ -73,6 +73,34 @@ assert.equal(app.filters.sort, "character");
 assert.equal(app.characterFocus, "Luke Skywalker");
 assert.equal(app.figureDisplayMode, "holotable");
 assert.equal(app.detailPanelOpen, false);
+const figureURL = window.location.href;
+const setLink = {
+  dataset: { action: "open-set-page" },
+  getAttribute: () => "?view=sets&item=75380-1",
+};
+let prevented = false;
+events.click({
+  target: { closest: () => setLink }, button: 0,
+  preventDefault() { prevented = true; },
+});
+assert.equal(prevented, true);
+assert.equal(app.view, "sets");
+assert.equal(app.selectedId, "75380-1");
+assert.equal(app.filters.search, "");
+assert.equal(app.filters.series, "all");
+assert.equal(app.characterFocus, null);
+window.location.href = entries[--position]; listeners.popstate();
+assert.equal(window.location.href, figureURL);
+assert.equal(app.selectedId, "fig1");
+assert.equal(app.filters.search, "Luke & Leia");
+prevented = false;
+const beforeModifiedClick = window.location.href;
+events.click({
+  target: { closest: () => setLink }, button: 0, ctrlKey: true,
+  preventDefault() { prevented = true; },
+});
+assert.equal(prevented, false, "Modified clicks retain native link behavior");
+assert.equal(window.location.href, beforeModifiedClick);
 window.location.href = "https://example.com/tracker/?view=invalid&series=invalid&sort=invalid&item=missing&character=missing";
 app.restoreNavigation();
 assert.equal(app.view, "home");
