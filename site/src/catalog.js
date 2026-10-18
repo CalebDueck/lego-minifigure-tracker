@@ -1,6 +1,6 @@
 const CATALOG_URL = new URL("../data/catalog.json", import.meta.url);
-const SETS_URL = new URL("../data/sets.json", import.meta.url);
-const META_URL = new URL("../data/catalog-meta.json", import.meta.url);
+const SETS_URL = new URL("../data/sets.json?v=20261018b", import.meta.url);
+const META_URL = new URL("../data/catalog-meta.json?v=20261018b", import.meta.url);
 
 export async function loadCatalogBundle() {
   const [catalogResponse, setsResponse, metaResponse] = await Promise.all([

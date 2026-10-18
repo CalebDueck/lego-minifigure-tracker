@@ -10,7 +10,7 @@ import {
   normalizeWishlistRanks,
   groupFiguresByCharacter,
   getCharacterArchiveLabel,
-} from "./catalog.js?v=20260724e";
+} from "./catalog.js?v=20261018b";
 import { firebaseConfig } from "./firebase-config.js?v=20260724e";
 import { createPersistence } from "./persistence.js?v=20261017a";
 import {
@@ -31,7 +31,7 @@ import {
   renderSetDetailPanel,
   renderImageOverlay,
   renderAuthOverlay,
-} from "./ui.js?v=20261018a";
+} from "./ui.js?v=20261018b";
 
 const DISPLAY_MODE_KEY = "sw-holocron-display-mode";
 const SET_VIEWS = new Set(["sets", "owned-sets", "not-owned-sets"]);

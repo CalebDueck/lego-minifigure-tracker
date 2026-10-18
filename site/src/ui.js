@@ -934,7 +934,7 @@ export function renderSetDetailPanel(set, record, session, figureCatalogById, fi
         <div class="detail-section detail-subsection">
           <div class="detail-section-title">Included minifigures</div>
           <ul class="appearance-list set-figure-list">
-            ${includedFigureRows}
+            ${includedFigureRows || '<li class="detail-note">This set contains no minifigures.</li>'}
           </ul>
         </div>
         <p class="detail-note">Marking a set complete will automatically add the minifigures from this set to your collection. Partial keeps the set tracked without auto-claiming every figure. Removing the complete-set flag does not remove minifigure ownership.</p>

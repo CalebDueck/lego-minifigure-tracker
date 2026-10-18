@@ -566,20 +566,22 @@ def main():
         excluded = any(term in lower_name for term in SET_EXCLUDE_TERMS)
         if not excluded and (has_star_wars_theme or is_star_wars_book):
             figures_here = resolve_figures_for_set(set_row["set_num"])
-            if figures_here:
-                brickset_row = brickset_sets.get(set_row["set_num"], {})
-                candidate_sets.append(
-                    {
-                        "set_num": set_row["set_num"],
-                        "name": set_row["name"],
-                        "year": int(set_row["year"] or 0),
-                        "theme_path": theme_path_str,
-                        "source_kind": source_kind(theme_path_str),
-                        "brickset_subtheme": brickset_row.get("subtheme", ""),
-                        "series_candidate": normalize_brickset_series(brickset_row.get("subtheme", "")),
-                        "figure_ids": figures_here,
-                    }
-                )
+            # Include builds without figures, but keep figure-free books out of the set catalog.
+            if not has_star_wars_theme and not figures_here:
+                continue
+            brickset_row = brickset_sets.get(set_row["set_num"], {})
+            candidate_sets.append(
+                {
+                    "set_num": set_row["set_num"],
+                    "name": set_row["name"],
+                    "year": int(set_row["year"] or 0),
+                    "theme_path": theme_path_str,
+                    "source_kind": source_kind(theme_path_str),
+                    "brickset_subtheme": brickset_row.get("subtheme", ""),
+                    "series_candidate": normalize_brickset_series(brickset_row.get("subtheme", "")),
+                    "figure_ids": figures_here,
+                }
+            )
 
     figure_appearances = defaultdict(list)
     for set_row in candidate_sets:
