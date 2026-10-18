@@ -31,7 +31,7 @@ import {
   renderSetDetailPanel,
   renderImageOverlay,
   renderAuthOverlay,
-} from "./ui.js?v=20260724e";
+} from "./ui.js?v=20261018a";
 
 const DISPLAY_MODE_KEY = "sw-holocron-display-mode";
 const SET_VIEWS = new Set(["sets", "owned-sets", "not-owned-sets"]);

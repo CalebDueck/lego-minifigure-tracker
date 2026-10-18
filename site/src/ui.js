@@ -536,7 +536,7 @@ function renderSetCard(set, record, figureRecords, selected) {
         </div>
         <div class="figure-character">${escapeHtml(set.name)}</div>
         <div class="figure-name">${escapeHtml(set.movieSeries)}</div>
-        <div class="figure-meta">${escapeHtml(set.year)} · ${escapeHtml(set.figureCount)} minifigs · ${escapeHtml(ownedFigureCount)} owned</div>
+        <div class="figure-meta">${escapeHtml(set.year)} - ${escapeHtml(String(ownedFigureCount))}/${escapeHtml(String(set.figureCount))} Minifigs Owned</div>
       </button>
       <div class="figure-link-row">
         <a class="figure-link-inline" href="${escapeHtml(set.bricklinkUrl)}" target="_blank" rel="noreferrer">Open set on BrickLink</a>
